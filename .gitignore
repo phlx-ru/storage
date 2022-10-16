@@ -38,3 +38,5 @@ bin/
 .env
 .env.*
 .cache
+
+storage/

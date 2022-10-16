@@ -104,8 +104,7 @@ func translateValidationErrors(ve validator.ValidationErrors, ut ut.Translator) 
 	var fe validator.FieldError
 
 	for i := 0; i < len(ve); i++ {
-		fe = ve[i].(validator.FieldError)
-		trans[fe.Field()] = fe.Translate(ut)
+		trans[fe.Field()] = ve[i].Translate(ut)
 	}
 
 	return trans

@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  gateway-server:
+  storage-server:
     image: ${REGISTRY_HOST}/storage-server:latest
     volumes:
     - ./configs:/data/conf

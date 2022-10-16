@@ -3,12 +3,10 @@ package data
 import (
 	"context"
 	"database/sql"
-	"runtime/debug"
 	"time"
 
 	"storage/ent"
 	"storage/internal/conf"
-	"storage/internal/pkg/logger"
 	"storage/internal/pkg/metrics"
 	"storage/internal/pkg/slices"
 
@@ -178,46 +176,6 @@ func (d *Data) CollectDatabaseMetrics(ctx context.Context, metric metrics.Metric
 // Seed everything you need by passing the seeding func
 func (d *Data) Seed(ctx context.Context, seeding func(context.Context, *ent.Client) error) error {
 	return seeding(ctx, d.ent)
-}
-
-func transaction(data Database, logs logger.Logger) func(
-	ctx context.Context,
-	txOptions *sql.TxOptions,
-	processes ...func(repoCtx context.Context) error,
-) error {
-	return func(ctx context.Context, txOptions *sql.TxOptions, processes ...func(repoCtx context.Context) error) error {
-		tx, err := data.Ent().BeginTx(ctx, txOptions)
-		if err != nil {
-			logs.Errorf(`failed to start tx: %v`, err)
-			return err
-		}
-		defer func() {
-			if recovered := recover(); recovered != nil {
-				logs.Errorf(`tx panic: recovered = %v; stack = %v`, recovered, string(debug.Stack()))
-				if tx != nil {
-					if err := tx.Rollback(); err != nil {
-						logs.Errorf(`tx panic rollback error: %v`, err)
-					}
-				}
-			}
-		}()
-		repoCtx := ent.NewContext(ctx, tx.Client())
-		for _, process := range processes {
-			if err := process(repoCtx); err != nil {
-				rollbackErr := tx.Rollback()
-				if rollbackErr != nil {
-					logs.Errorf(`failed to rollback tx caused of err '%s' because of: %v`, err.Error(), rollbackErr)
-					return rollbackErr
-				}
-				return err
-			}
-		}
-		if err := tx.Commit(); err != nil {
-			logs.Errorf(`failed to commit tx: %v`, err)
-			return err
-		}
-		return nil
-	}
 }
 
 // client return client by tx in context if it exists or default ent client

@@ -87,7 +87,7 @@ func NewHTTPServer(
 func LogFormatter(param gin.LogFormatterParams) string {
 	if param.Latency > time.Minute {
 		// Truncate in a golang < 1.8 safe way
-		param.Latency = param.Latency - param.Latency%time.Second
+		param.Latency -= param.Latency % time.Second
 	}
 	return fmt.Sprintf(
 		"ACCESS ts=%v status=%d latency=%v client.ip=%s method=%s path=%-7s error=%#v\n",

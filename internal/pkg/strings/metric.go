@@ -18,9 +18,5 @@ func toString(a any) string {
 	if ok {
 		return stringer.String()
 	}
-	switch a.(type) {
-	case string:
-		return a.(string)
-	}
 	return fmt.Sprintf(`%v`, a)
 }

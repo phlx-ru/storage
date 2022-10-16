@@ -78,7 +78,7 @@ func (s *StorageService) Upload(c *gin.Context, params storage.UploadParams) {
 
 	filename := c.Request.URL.Query().Get(`filename`)
 	if filename == "" {
-		s.responseError(c, errors.Unauthorized(`filename_unspecified`, `filename is not specified`))
+		s.responseValidationError(c, errors.Unauthorized(`filename_unspecified`, `filename is not specified`))
 		return
 	}
 

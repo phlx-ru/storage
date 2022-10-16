@@ -1,0 +1,102 @@
+openapi: 3.0.0 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md
+
+info:
+  version: 1.1.1
+  title: storage
+  description: Storage service for Cargo
+  termsOfService: http://swagger.io/terms/
+
+servers:
+  - url: https://storage.cargo.b-resh.ru
+    description: API on staging environment
+  - url: https://storage.services.localhost
+    description: API on local infra
+  - url: http://localhost:8000
+    description: API on local debug
+
+tags:
+  - name: storage
+    description: Хранилище
+
+paths:
+
+  /api/1/upload:
+    summary: Загрузка файла на сервер хранения
+    description: >
+      Загружает файл на сервер для текущего авторизованного пользователя.
+      Возвращает ошибку, если пользователь не авторизован.
+      Размер загружаемого файла ограничен — максимум 100 мегабайтов.
+      В случае успеха вернёт ответ с данными загруженного файла и записи о нём в базе данных.
+    parameters:
+      - $ref: "./common/schema.yaml#/components/parameters/authTokenInQuery"
+    post:
+      tags: [ 'storage' ]
+      security:
+        - BearerAuth: [""]
+      operationId: Upload
+      requestBody:
+        $ref: "./storage/schema.yaml#/components/requestBodies/upload"
+      responses:
+        '200':
+          $ref: "./storage/schema.yaml#/components/responses/upload"
+        '400':
+          $ref: "./common/schema.yaml#/components/responses/errorBadRequest"
+        '401':
+          $ref: "./common/schema.yaml#/components/responses/errorUnauthorized"
+        '429':
+          $ref: "./common/schema.yaml#/components/responses/errorTooManyRequests"
+        '500':
+          $ref: "./common/schema.yaml#/components/responses/errorInternal"
+
+  /api/1/download/{uid}:
+    summary: Скачивание файла с сервера
+    description: >
+      Скачивает файл с сервера без проверки авторизации.
+    parameters:
+      - $ref: "./storage/schema.yaml#/components/parameters/uid"
+    get:
+      tags: [ 'storage' ]
+      security:
+        - BearerAuth: [ "" ]
+      operationId: Download
+      responses:
+        '200':
+          $ref: "./storage/schema.yaml#/components/responses/download"
+        '400':
+          $ref: "./common/schema.yaml#/components/responses/errorBadRequest"
+        '401':
+          $ref: "./common/schema.yaml#/components/responses/errorUnauthorized"
+        '429':
+          $ref: "./common/schema.yaml#/components/responses/errorTooManyRequests"
+        '500':
+          $ref: "./common/schema.yaml#/components/responses/errorInternal"
+
+  /api/1/files/list:
+    summary: Получение списка файлов для текущего авторизованного пользователя
+    description: >
+      Возвращает набор данных для каждого пользовательского файла, загруженного на S3-хранилище
+    parameters:
+      - $ref: "./common/schema.yaml#/components/parameters/authTokenInQuery"
+    get:
+      tags: [ 'storage' ]
+      security:
+        - BearerAuth: [ "" ]
+      operationId: FilesList
+      responses:
+        '200':
+          $ref: "./storage/schema.yaml#/components/responses/filesList"
+        '400':
+          $ref: "./common/schema.yaml#/components/responses/errorBadRequest"
+        '401':
+          $ref: "./common/schema.yaml#/components/responses/errorUnauthorized"
+        '429':
+          $ref: "./common/schema.yaml#/components/responses/errorTooManyRequests"
+        '500':
+          $ref: "./common/schema.yaml#/components/responses/errorInternal"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

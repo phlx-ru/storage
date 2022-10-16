@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package auth.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+
+option go_package = "auth/api/auth/v1;v1";
+
+// This API provides methods for users authentication (returns JWT, without cookies)
+service Auth {
+  // Check user and session info by token
+  rpc Check (CheckRequest) returns (CheckResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/check"
+      body: "*"
+    };
+  }
+}
+
+// Empty response for success signal without data
+message AuthNothing {}
+
+// Request for check auth
+message CheckRequest {
+  // User auth JWT token
+  string token = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CheckResponse {
+  message User {
+    // User ID
+    int64 id = 1;
+    // User category type
+    string type = 2;
+    // User display name
+    string displayName = 3;
+    // User email
+    optional string email = 4;
+    // User phone
+    optional string phone = 5;
+  }
+  message Session {
+    // Time until which session and token is active
+    google.protobuf.Timestamp until = 1;
+    // Users IP to which session is bound
+    optional string ip = 2;
+    // Users User-Agent header to which session is bound
+    optional string userAgent = 3;
+    // Users DeviceId to which session is bound if login was by mobile device
+    optional string deviceId = 4;
+  }
+  User user = 1;
+  Session session = 2;
+}

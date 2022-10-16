@@ -1,0 +1,69 @@
+# More info on config here: https://github.com/golangci/golangci-lint#config-file
+run:
+  modules-download-mode: vendor
+  timeout: 2m
+  issues-exit-code: 1
+  tests: true
+  build-tags: ["!wireinject"]
+  skip-dirs:
+    - bin
+    - vendor
+  skip-files:
+    - ".*_test.go$"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+
+linters:
+  disable-all: true
+  enable:
+    - revive
+    - gocritic
+    - govet
+    - errcheck
+    - deadcode
+    - varcheck
+    - ineffassign
+    - typecheck
+    - goconst
+    - gosec
+    - goimports
+    - gosimple
+    - unused
+    - unparam
+    - goconst
+    - exportloopref
+    - gocyclo
+    - gocognit
+    - prealloc
+    - unconvert
+    - unused
+    - deadcode
+    - nakedret
+    - staticcheck
+
+issues:
+  exclude-use-default: false
+  exclude:
+    - G104
+    - exported func .* returns unexported type .*, which can be annoying to use
+    - should have a package comment, unless it's in another file for this package
+    - don't use an underscore in package name
+    - Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv|.*Rollback). is not checked
+    - should check returned error before deferring
+    - "not declared by package utf8"
+    - "unicode/utf8/utf8.go"
+    - "or be unexported"

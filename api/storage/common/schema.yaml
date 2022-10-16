@@ -1,0 +1,91 @@
+openapi: 3.0.0 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md
+info:
+  version: 1.0.0
+  title: common components
+  description: >
+    Общие компоненты
+
+paths:
+  # here for schema compatibility
+
+components:
+  parameters:
+    authTokenInHeaders:
+      name: x-auth-token
+      description: Auth token from Headers
+      in: header
+      required: false
+      schema:
+        $ref: "#/components/schemas/propertyAuthToken"
+    authTokenInQuery:
+      name: authToken
+      description: Auth token from Query
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/propertyAuthToken"
+
+  responses:
+    errorCommon:
+      description: Common API error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorCommon'
+    errorBadRequest:
+      description: 400 Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorCommon'
+    errorUnauthorized:
+      description: 401 Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorCommon'
+    errorTooManyRequests:
+      description: 429 Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorCommon'
+    errorInternal:
+      description: 500 Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorCommon'
+
+  schemas:
+    errorCommon:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+            - code
+            - reason
+            - message
+          properties:
+            code:
+              description: Error code
+              type: integer
+              example: 500
+            reason:
+              description: Typed reason of error
+              type: string
+              example: auth_error
+            message:
+              description: Error message
+              type: string
+              example: There is something wrong
+
+    propertyAuthToken:
+      type: string
+      description: Авторизационный токен для пользовательской сессии
+      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLGF1dGgiLCJleHAiOjc5NTOxMTU3NDJ9.vNkWaAqvTUtgzVSAhJJDJ90QLpBIMlYd_8keQb1qVH8

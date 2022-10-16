@@ -1,0 +1,9 @@
+# https://github.com/deepmap/oapi-codegen/blob/master/pkg/codegen/configuration.go#L14
+package: storage
+generate:
+  gin-server: true
+  models: true
+  embedded-spec: true
+import-mapping:
+  ./common/schema.yaml: storage/api/storage/common
+  ./storage/schema.yaml: storage/api/storage/storage

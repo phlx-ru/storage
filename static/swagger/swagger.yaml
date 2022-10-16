@@ -1,0 +1,166 @@
+openapi: 3.0.0
+info:
+  version: 1.1.1
+  title: storage
+  description: Storage service for Cargo
+  termsOfService: http://swagger.io/terms/
+servers:
+  - url: https://storage.cargo.b-resh.ru
+    description: API on staging environment
+  - url: https://storage.services.localhost
+    description: API on local infra
+  - url: http://localhost:8000
+    description: API on local debug
+tags:
+  - name: storage
+    description: Хранилище
+paths:
+  /api/1/upload:
+    summary: Загрузка файла на сервер хранения
+    description: >
+      Загружает файл на сервер для текущего авторизованного пользователя.
+      Возвращает ошибку, если пользователь не авторизован. Размер загружаемого
+      файла ограничен — максимум 100 мегабайтов. В случае успеха вернёт ответ с
+      данными загруженного файла и записи о нём в базе данных.
+    parameters:
+      - name: authToken
+        description: Auth token from Query
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Авторизационный токен для пользовательской сессии
+          example: >-
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLGF1dGgiLCJleHAiOjc5NTOxMTU3NDJ9.vNkWaAqvTUtgzVSAhJJDJ90QLpBIMlYd_8keQb1qVH8
+    post:
+      tags:
+        - storage
+      security:
+        - BearerAuth:
+            - ''
+      operationId: Upload
+      requestBody:
+        required: true
+        description: >-
+          File request body with content-type of file and input data from bytes
+          of file
+        content:
+          '*/*': {}
+      responses:
+        '200':
+          description: upload ok
+          content:
+            application/json:
+              schema:
+                type: object
+                description: upload ok reply
+                additionalProperties: false
+                properties:
+                  uid: &ref_1
+                    type: string
+                    description: Уникальный идентификатор файла в формате UUID
+                    example: 123e4567-e89b-12d3-a456-426614174000
+                  userId:
+                    type: integer
+                    description: >-
+                      Идентификатор авторизованного пользователя, к которому
+                      привязан файл
+                    example: 1
+                  filename:
+                    type: string
+                    description: >-
+                      Название файла с расширением, с таким названием файл будет
+                      скачан
+                    example: >-
+                      С. Рассел, П. Норвиг ~ Искусственный интеллект современный
+                      подход (AIMA-2), 2-е издание, 2007.pdf
+                  objectPath:
+                    type: string
+                    description: Расположение файла на S3-хранилище
+                    example: >-
+                      1/s-rassel-p-norvig-iskusstvennyi-intellekt-sovremennyi-podkhod-aima-2-2-e-izdanie-2007.pdf
+                  size:
+                    type: integer
+                    description: Размер файла в байтах
+                    example: 12843018
+                  mimeType:
+                    type: string
+                    description: MIME-тип файла
+                    example: application/pdf
+        '400': &ref_2
+          description: 400 Bad Request
+          content:
+            application/json:
+              schema: &ref_0
+                type: object
+                additionalProperties: false
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - code
+                      - reason
+                      - message
+                    properties:
+                      code:
+                        description: Error code
+                        type: integer
+                        example: 500
+                      reason:
+                        description: Typed reason of error
+                        type: string
+                        example: auth_error
+                      message:
+                        description: Error message
+                        type: string
+                        example: There is something wrong
+        '401': &ref_3
+          description: 401 Unauthorized
+          content:
+            application/json:
+              schema: *ref_0
+        '429': &ref_4
+          description: 429 Too Many Requests
+          content:
+            application/json:
+              schema: *ref_0
+        '500': &ref_5
+          description: 500 Internal Server Error
+          content:
+            application/json:
+              schema: *ref_0
+  /api/1/download/{uid}:
+    summary: Скачивание файла с сервера
+    description: |
+      Скачивает файл с сервера без проверки авторизации.
+    parameters:
+      - name: uid
+        description: file unique identifier (UUID)
+        in: path
+        required: true
+        schema: *ref_1
+    get:
+      tags:
+        - storage
+      security:
+        - BearerAuth:
+            - ''
+      operationId: Download
+      responses:
+        '200':
+          description: download ok
+          content:
+            '*/*': {}
+        '400': *ref_2
+        '401': *ref_3
+        '429': *ref_4
+        '500': *ref_5
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

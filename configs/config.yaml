@@ -1,0 +1,27 @@
+log:
+  level: ${LOG_LEVEL:debug} # vendor/github.com/go-kratos/kratos/v2/log/level.go
+metrics:
+  address: ${METRICS_ADDRESS:localhost:8125}
+  mute: ${METRICS_MUTE:true}
+server:
+  http:
+    addr: ${SERVER_HTTP_ADDR:0.0.0.0:8000}
+    timeout: ${SERVER_HTTP_TIMEOUT:1s}
+data:
+  database:
+    driver: postgres
+    source: host=${POSTGRES_HOST:localhost} port=${POSTGRES_PORT:5432} user=${POSTGRES_USER:postgres} password=${POSTGRES_PASS:postgres} dbname=${POSTGRES_DB:storage} sslmode=disable
+    migrate: ${DATA_DATABASE_MIGRATE:soft} # (soft|hard|none)
+    debug: ${DATA_DATABASE_DEBUG:false}
+client:
+  grpc:
+    auth:
+      endpoint: ${CLIENT_GRPC_AUTH_ENDPOINT:auth-server:9000}
+      timeout: ${CLIENT_GRPC_AUTH_TIMEOUT:10s}
+s3:
+  yandex:
+    endpoint: ${S3_YANDEX_ENDPOINT:some-bucket-storage.storage.yandexcloud.net}
+    bucketLocation: ${S3_YANDEX_BUCKET_LOCATION:ru-central1}
+    bucketName: ${S3_YANDEX_BUCKET_NAME:main}
+    accessKeyId: ${S3_YANDEX_ACCESS_KEY_ID}
+    secretAccessKey: ${S3_YANDEX_SECRET_ACCESS_KEY}

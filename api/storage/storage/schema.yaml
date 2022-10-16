@@ -1,0 +1,142 @@
+openapi: 3.0.0 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md
+info:
+  version: 1.0.0
+  title: storage components
+  description: >
+    Компоненты хранилища
+
+paths:
+  # here for schema compatibility
+
+components:
+  parameters:
+    filename:
+      name: filename
+      description: filename
+      in: query
+      required: true
+      schema:
+        $ref: "#/components/schemas/propertyFilename"
+    uid:
+      name: uid
+      description: file unique identifier (UUID)
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/propertyUid"
+
+  requestBodies:
+    upload:
+      required: true
+      description: File request body with content-type of file and input data from bytes of file
+      content:
+        "*/*": {}
+
+  responses:
+    upload:
+      description: upload ok
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/uploadResponse'
+
+    download:
+      description: download ok
+      content:
+        "*/*": {}
+
+    filesList:
+      description: files list
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/filesListResponse'
+
+  schemas:
+    propertyFilename:
+      type: string
+      description: Название файла с расширением, с таким названием файл будет скачан
+      example: "С. Рассел, П. Норвиг ~ Искусственный интеллект современный подход (AIMA-2), 2-е издание, 2007.pdf"
+
+    propertyUid:
+      type: string
+      description: Уникальный идентификатор файла в формате UUID
+      example: 123e4567-e89b-12d3-a456-426614174000
+
+    propertyObjectPath:
+      type: string
+      description: Расположение файла на S3-хранилище
+      example: "1/s-rassel-p-norvig-iskusstvennyi-intellekt-sovremennyi-podkhod-aima-2-2-e-izdanie-2007.pdf"
+
+    propertySize:
+      type: integer
+      description: Размер файла в байтах
+      example: 12843018
+
+    propertyMimeType:
+      type: string
+      description: MIME-тип файла
+      example: application/pdf
+
+    propertyUserId:
+      type: integer
+      description: Уникальный идентификатор пользователя
+      example: 1
+
+    fileItemCompact:
+      type: object
+      description: file item
+      additionalProperties: false
+      required:
+        - uid
+        - filename
+        - objectPath
+      properties:
+        uid:
+          $ref: "#/components/schemas/propertyUid"
+        filename:
+          $ref: "#/components/schemas/propertyFilename"
+        objectPath:
+          $ref: "#/components/schemas/propertyObjectPath"
+        size:
+          $ref: "#/components/schemas/propertySize"
+        mimeType:
+          $ref: "#/components/schemas/propertyMimeType"
+
+    fileItemFull:
+      type: object
+      description: file item
+      additionalProperties: false
+      required:
+        - uid
+        - userId
+        - filename
+        - objectPath
+      properties:
+        uid:
+          $ref: "#/components/schemas/propertyUid"
+        userId:
+          $ref: "#/components/schemas/propertyUserId"
+        filename:
+          $ref: "#/components/schemas/propertyFilename"
+        objectPath:
+          $ref: "#/components/schemas/propertyObjectPath"
+        size:
+          $ref: "#/components/schemas/propertySize"
+        mimeType:
+          $ref: "#/components/schemas/propertyMimeType"
+
+    uploadResponse:
+      $ref: "#/components/schemas/fileItemFull"
+
+    filesListResponse:
+      type: object
+      description: upload ok reply
+      additionalProperties: false
+      required:
+        - files
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/fileItemCompact"

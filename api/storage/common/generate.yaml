@@ -1,0 +1,7 @@
+# https://github.com/deepmap/oapi-codegen/blob/master/pkg/codegen/configuration.go#L14
+package: common
+generate:
+  models: true
+  embedded-spec: true
+output-options:
+  skip-prune: true

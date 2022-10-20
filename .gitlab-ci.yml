@@ -1,0 +1,33 @@
+stages:
+  - build
+  - lint
+  - test
+
+build-job:
+  image: "golang:1.19"
+  stage: build
+  tags:
+    - build
+  script:
+    - echo "Run Go build for project:"
+    - make build
+
+lint-job:
+  image: "golangci/golangci-lint:latest"
+  stage: lint
+  tags:
+    - build
+  script:
+    - echo "Run Golang CI lint for project:"
+    - go mod tidy
+    - go mod vendor
+    - golangci-lint run -v
+
+test-job:
+  image: "golang:1.19"
+  stage: test
+  tags:
+    - build
+  script:
+    - echo "Run Go test for project:"
+    - go test -race -parallel 10 ./...

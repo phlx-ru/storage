@@ -67,3 +67,4 @@ issues:
     - "not declared by package utf8"
     - "unicode/utf8/utf8.go"
     - "or be unexported"
+    - "should have a package comment"

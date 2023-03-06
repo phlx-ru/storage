@@ -10,13 +10,13 @@ import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
+	"github.com/phlx-ru/hatchet/metrics"
 
 	"storage/internal/biz"
 	"storage/internal/clients/auth"
-	"storage/internal/clients/yandex"
+	"storage/internal/clients/minio"
 	"storage/internal/conf"
 	"storage/internal/data"
-	"storage/internal/pkg/metrics"
 	"storage/internal/server"
 	"storage/internal/service"
 )
@@ -31,13 +31,22 @@ func wireApp(
 	context.Context,
 	data.Database,
 	*conf.Server,
+	*conf.Auth,
 	auth.Client,
-	yandex.Client,
+	minio.Client,
 	metrics.Metrics,
 	log.Logger,
 ) (
 	*kratos.App,
 	error,
 ) {
-	panic(wire.Build(server.ProviderSet, data.ProviderRepoSet, biz.ProviderSet, service.ProviderSet, newApp))
+	panic(wire.Build(
+		server.ProviderSet,
+		data.ProviderRepoSet,
+		biz.ProviderSet,
+		service.ProviderSet,
+		newApp,
+
+		biz.BindFileRepository,
+	))
 }

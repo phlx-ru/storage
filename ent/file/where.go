@@ -12,831 +12,537 @@ import (
 
 // ID filters vertices based on their ID field.
 func ID(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
 func IDIn(ids ...int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		v := make([]any, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.In(s.C(FieldID), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
 func IDNotIn(ids ...int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		v := make([]any, len(ids))
-		for i := range v {
-			v[i] = ids[i]
-		}
-		s.Where(sql.NotIn(s.C(FieldID), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldID), id))
-	})
+	return predicate.File(sql.FieldLTE(FieldID, id))
 }
 
 // UID applies equality check predicate on the "uid" field. It's identical to UIDEQ.
 func UID(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldUID, v))
 }
 
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
 func UserID(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldUserID, v))
 }
 
 // Filename applies equality check predicate on the "filename" field. It's identical to FilenameEQ.
 func Filename(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldFilename, v))
 }
 
 // ObjectPath applies equality check predicate on the "object_path" field. It's identical to ObjectPathEQ.
 func ObjectPath(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldObjectPath, v))
 }
 
 // Size applies equality check predicate on the "size" field. It's identical to SizeEQ.
 func Size(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldSize, v))
 }
 
 // MimeType applies equality check predicate on the "mime_type" field. It's identical to MimeTypeEQ.
 func MimeType(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldMimeType, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // DeletedAt applies equality check predicate on the "deleted_at" field. It's identical to DeletedAtEQ.
 func DeletedAt(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldDeletedAt, v))
 }
 
 // UIDEQ applies the EQ predicate on the "uid" field.
 func UIDEQ(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldUID, v))
 }
 
 // UIDNEQ applies the NEQ predicate on the "uid" field.
 func UIDNEQ(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldUID, v))
 }
 
 // UIDIn applies the In predicate on the "uid" field.
 func UIDIn(vs ...uuid.UUID) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldUID), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldUID, vs...))
 }
 
 // UIDNotIn applies the NotIn predicate on the "uid" field.
 func UIDNotIn(vs ...uuid.UUID) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldUID), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldUID, vs...))
 }
 
 // UIDGT applies the GT predicate on the "uid" field.
 func UIDGT(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldGT(FieldUID, v))
 }
 
 // UIDGTE applies the GTE predicate on the "uid" field.
 func UIDGTE(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldUID, v))
 }
 
 // UIDLT applies the LT predicate on the "uid" field.
 func UIDLT(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldLT(FieldUID, v))
 }
 
 // UIDLTE applies the LTE predicate on the "uid" field.
 func UIDLTE(v uuid.UUID) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUID), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldUID, v))
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.
 func UserIDEQ(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldUserID, v))
 }
 
 // UserIDNEQ applies the NEQ predicate on the "user_id" field.
 func UserIDNEQ(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldUserID, v))
 }
 
 // UserIDIn applies the In predicate on the "user_id" field.
 func UserIDIn(vs ...int) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldUserID), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldUserID, vs...))
 }
 
 // UserIDNotIn applies the NotIn predicate on the "user_id" field.
 func UserIDNotIn(vs ...int) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldUserID), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldUserID, vs...))
 }
 
 // UserIDGT applies the GT predicate on the "user_id" field.
 func UserIDGT(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldGT(FieldUserID, v))
 }
 
 // UserIDGTE applies the GTE predicate on the "user_id" field.
 func UserIDGTE(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldUserID, v))
 }
 
 // UserIDLT applies the LT predicate on the "user_id" field.
 func UserIDLT(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldLT(FieldUserID, v))
 }
 
 // UserIDLTE applies the LTE predicate on the "user_id" field.
 func UserIDLTE(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUserID), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldUserID, v))
 }
 
 // FilenameEQ applies the EQ predicate on the "filename" field.
 func FilenameEQ(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldFilename, v))
 }
 
 // FilenameNEQ applies the NEQ predicate on the "filename" field.
 func FilenameNEQ(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldFilename, v))
 }
 
 // FilenameIn applies the In predicate on the "filename" field.
 func FilenameIn(vs ...string) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldFilename), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldFilename, vs...))
 }
 
 // FilenameNotIn applies the NotIn predicate on the "filename" field.
 func FilenameNotIn(vs ...string) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldFilename), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldFilename, vs...))
 }
 
 // FilenameGT applies the GT predicate on the "filename" field.
 func FilenameGT(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldGT(FieldFilename, v))
 }
 
 // FilenameGTE applies the GTE predicate on the "filename" field.
 func FilenameGTE(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldFilename, v))
 }
 
 // FilenameLT applies the LT predicate on the "filename" field.
 func FilenameLT(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldLT(FieldFilename, v))
 }
 
 // FilenameLTE applies the LTE predicate on the "filename" field.
 func FilenameLTE(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldFilename, v))
 }
 
 // FilenameContains applies the Contains predicate on the "filename" field.
 func FilenameContains(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldContains(FieldFilename, v))
 }
 
 // FilenameHasPrefix applies the HasPrefix predicate on the "filename" field.
 func FilenameHasPrefix(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldHasPrefix(FieldFilename, v))
 }
 
 // FilenameHasSuffix applies the HasSuffix predicate on the "filename" field.
 func FilenameHasSuffix(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldHasSuffix(FieldFilename, v))
 }
 
 // FilenameEqualFold applies the EqualFold predicate on the "filename" field.
 func FilenameEqualFold(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldEqualFold(FieldFilename, v))
 }
 
 // FilenameContainsFold applies the ContainsFold predicate on the "filename" field.
 func FilenameContainsFold(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldFilename), v))
-	})
+	return predicate.File(sql.FieldContainsFold(FieldFilename, v))
 }
 
 // ObjectPathEQ applies the EQ predicate on the "object_path" field.
 func ObjectPathEQ(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldObjectPath, v))
 }
 
 // ObjectPathNEQ applies the NEQ predicate on the "object_path" field.
 func ObjectPathNEQ(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldObjectPath, v))
 }
 
 // ObjectPathIn applies the In predicate on the "object_path" field.
 func ObjectPathIn(vs ...string) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldObjectPath), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldObjectPath, vs...))
 }
 
 // ObjectPathNotIn applies the NotIn predicate on the "object_path" field.
 func ObjectPathNotIn(vs ...string) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldObjectPath), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldObjectPath, vs...))
 }
 
 // ObjectPathGT applies the GT predicate on the "object_path" field.
 func ObjectPathGT(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldGT(FieldObjectPath, v))
 }
 
 // ObjectPathGTE applies the GTE predicate on the "object_path" field.
 func ObjectPathGTE(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldObjectPath, v))
 }
 
 // ObjectPathLT applies the LT predicate on the "object_path" field.
 func ObjectPathLT(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldLT(FieldObjectPath, v))
 }
 
 // ObjectPathLTE applies the LTE predicate on the "object_path" field.
 func ObjectPathLTE(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldObjectPath, v))
 }
 
 // ObjectPathContains applies the Contains predicate on the "object_path" field.
 func ObjectPathContains(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldContains(FieldObjectPath, v))
 }
 
 // ObjectPathHasPrefix applies the HasPrefix predicate on the "object_path" field.
 func ObjectPathHasPrefix(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldHasPrefix(FieldObjectPath, v))
 }
 
 // ObjectPathHasSuffix applies the HasSuffix predicate on the "object_path" field.
 func ObjectPathHasSuffix(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldHasSuffix(FieldObjectPath, v))
 }
 
 // ObjectPathEqualFold applies the EqualFold predicate on the "object_path" field.
 func ObjectPathEqualFold(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldEqualFold(FieldObjectPath, v))
 }
 
 // ObjectPathContainsFold applies the ContainsFold predicate on the "object_path" field.
 func ObjectPathContainsFold(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldObjectPath), v))
-	})
+	return predicate.File(sql.FieldContainsFold(FieldObjectPath, v))
 }
 
 // SizeEQ applies the EQ predicate on the "size" field.
 func SizeEQ(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldSize, v))
 }
 
 // SizeNEQ applies the NEQ predicate on the "size" field.
 func SizeNEQ(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldSize, v))
 }
 
 // SizeIn applies the In predicate on the "size" field.
 func SizeIn(vs ...int) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldSize), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldSize, vs...))
 }
 
 // SizeNotIn applies the NotIn predicate on the "size" field.
 func SizeNotIn(vs ...int) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldSize), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldSize, vs...))
 }
 
 // SizeGT applies the GT predicate on the "size" field.
 func SizeGT(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldGT(FieldSize, v))
 }
 
 // SizeGTE applies the GTE predicate on the "size" field.
 func SizeGTE(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldSize, v))
 }
 
 // SizeLT applies the LT predicate on the "size" field.
 func SizeLT(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldLT(FieldSize, v))
 }
 
 // SizeLTE applies the LTE predicate on the "size" field.
 func SizeLTE(v int) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSize), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldSize, v))
 }
 
 // MimeTypeEQ applies the EQ predicate on the "mime_type" field.
 func MimeTypeEQ(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldMimeType, v))
 }
 
 // MimeTypeNEQ applies the NEQ predicate on the "mime_type" field.
 func MimeTypeNEQ(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldMimeType, v))
 }
 
 // MimeTypeIn applies the In predicate on the "mime_type" field.
 func MimeTypeIn(vs ...string) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldMimeType), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldMimeType, vs...))
 }
 
 // MimeTypeNotIn applies the NotIn predicate on the "mime_type" field.
 func MimeTypeNotIn(vs ...string) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldMimeType), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldMimeType, vs...))
 }
 
 // MimeTypeGT applies the GT predicate on the "mime_type" field.
 func MimeTypeGT(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldGT(FieldMimeType, v))
 }
 
 // MimeTypeGTE applies the GTE predicate on the "mime_type" field.
 func MimeTypeGTE(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldMimeType, v))
 }
 
 // MimeTypeLT applies the LT predicate on the "mime_type" field.
 func MimeTypeLT(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldLT(FieldMimeType, v))
 }
 
 // MimeTypeLTE applies the LTE predicate on the "mime_type" field.
 func MimeTypeLTE(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldMimeType, v))
 }
 
 // MimeTypeContains applies the Contains predicate on the "mime_type" field.
 func MimeTypeContains(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldContains(FieldMimeType, v))
 }
 
 // MimeTypeHasPrefix applies the HasPrefix predicate on the "mime_type" field.
 func MimeTypeHasPrefix(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldHasPrefix(FieldMimeType, v))
 }
 
 // MimeTypeHasSuffix applies the HasSuffix predicate on the "mime_type" field.
 func MimeTypeHasSuffix(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldHasSuffix(FieldMimeType, v))
 }
 
 // MimeTypeEqualFold applies the EqualFold predicate on the "mime_type" field.
 func MimeTypeEqualFold(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldEqualFold(FieldMimeType, v))
 }
 
 // MimeTypeContainsFold applies the ContainsFold predicate on the "mime_type" field.
 func MimeTypeContainsFold(v string) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldMimeType), v))
-	})
+	return predicate.File(sql.FieldContainsFold(FieldMimeType, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
 func CreatedAtNEQ(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
 // CreatedAtIn applies the In predicate on the "created_at" field.
 func CreatedAtIn(vs ...time.Time) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldCreatedAt), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
 // CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
 func CreatedAtNotIn(vs ...time.Time) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldCreatedAt), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
 // CreatedAtGT applies the GT predicate on the "created_at" field.
 func CreatedAtGT(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldGT(FieldCreatedAt, v))
 }
 
 // CreatedAtGTE applies the GTE predicate on the "created_at" field.
 func CreatedAtGTE(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldCreatedAt, v))
 }
 
 // CreatedAtLT applies the LT predicate on the "created_at" field.
 func CreatedAtLT(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldLT(FieldCreatedAt, v))
 }
 
 // CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldCreatedAt, v))
 }
 
 // UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
 func UpdatedAtEQ(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
 func UpdatedAtNEQ(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldUpdatedAt, v))
 }
 
 // UpdatedAtIn applies the In predicate on the "updated_at" field.
 func UpdatedAtIn(vs ...time.Time) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldUpdatedAt), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldUpdatedAt, vs...))
 }
 
 // UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
 func UpdatedAtNotIn(vs ...time.Time) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldUpdatedAt), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldUpdatedAt, vs...))
 }
 
 // UpdatedAtGT applies the GT predicate on the "updated_at" field.
 func UpdatedAtGT(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldGT(FieldUpdatedAt, v))
 }
 
 // UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
 func UpdatedAtGTE(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldUpdatedAt, v))
 }
 
 // UpdatedAtLT applies the LT predicate on the "updated_at" field.
 func UpdatedAtLT(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldLT(FieldUpdatedAt, v))
 }
 
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUpdatedAt), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
 // DeletedAtEQ applies the EQ predicate on the "deleted_at" field.
 func DeletedAtEQ(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldEQ(FieldDeletedAt, v))
 }
 
 // DeletedAtNEQ applies the NEQ predicate on the "deleted_at" field.
 func DeletedAtNEQ(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldNEQ(FieldDeletedAt, v))
 }
 
 // DeletedAtIn applies the In predicate on the "deleted_at" field.
 func DeletedAtIn(vs ...time.Time) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.In(s.C(FieldDeletedAt), v...))
-	})
+	return predicate.File(sql.FieldIn(FieldDeletedAt, vs...))
 }
 
 // DeletedAtNotIn applies the NotIn predicate on the "deleted_at" field.
 func DeletedAtNotIn(vs ...time.Time) predicate.File {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotIn(s.C(FieldDeletedAt), v...))
-	})
+	return predicate.File(sql.FieldNotIn(FieldDeletedAt, vs...))
 }
 
 // DeletedAtGT applies the GT predicate on the "deleted_at" field.
 func DeletedAtGT(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldGT(FieldDeletedAt, v))
 }
 
 // DeletedAtGTE applies the GTE predicate on the "deleted_at" field.
 func DeletedAtGTE(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldGTE(FieldDeletedAt, v))
 }
 
 // DeletedAtLT applies the LT predicate on the "deleted_at" field.
 func DeletedAtLT(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldLT(FieldDeletedAt, v))
 }
 
 // DeletedAtLTE applies the LTE predicate on the "deleted_at" field.
 func DeletedAtLTE(v time.Time) predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldDeletedAt), v))
-	})
+	return predicate.File(sql.FieldLTE(FieldDeletedAt, v))
 }
 
 // DeletedAtIsNil applies the IsNil predicate on the "deleted_at" field.
 func DeletedAtIsNil() predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldDeletedAt)))
-	})
+	return predicate.File(sql.FieldIsNull(FieldDeletedAt))
 }
 
 // DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
 func DeletedAtNotNil() predicate.File {
-	return predicate.File(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldDeletedAt)))
-	})
+	return predicate.File(sql.FieldNotNull(FieldDeletedAt))
 }
 
 // And groups predicates with the AND operator between them.

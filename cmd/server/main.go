@@ -3,16 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"path"
-
-	"storage/internal/clients/auth"
-	"storage/internal/clients/yandex"
-	"storage/internal/conf"
-	pkgConfig "storage/internal/pkg/config"
-	"storage/internal/pkg/logger"
-	"storage/internal/pkg/metrics"
-	"storage/internal/pkg/runtime"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -20,12 +13,20 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/joho/godotenv"
+	pkgConfig "github.com/phlx-ru/hatchet/config"
+	"github.com/phlx-ru/hatchet/logger"
+	"github.com/phlx-ru/hatchet/metrics"
+	"github.com/phlx-ru/hatchet/runtime"
+
+	"storage/internal/clients/auth"
+	"storage/internal/clients/minio"
+	"storage/internal/conf"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
 var (
 	// Name is the name of the compiled software.
-	Name = `storage_server`
+	Name = `storage-server`
 	// Version is the version of the compiled software.
 	Version = `1.1.1`
 	// flagconf is the config flag.
@@ -39,20 +40,6 @@ var (
 func init() {
 	flag.StringVar(&flagconf, "conf", "./configs", "config path, eg: -conf config.yaml")
 	flag.StringVar(&dotenv, "dotenv", ".env", ".env file, eg: -dotenv .env")
-}
-
-func newApp(ctx context.Context, logger log.Logger, hs *http.Server) *kratos.App {
-	return kratos.New(
-		kratos.ID(id),
-		kratos.Name(Name),
-		kratos.Version(Version),
-		kratos.Metadata(map[string]string{}),
-		kratos.Logger(logger),
-		kratos.Context(ctx),
-		kratos.Server(
-			hs,
-		),
-	)
 }
 
 func main() {
@@ -93,8 +80,7 @@ func run() error {
 		return err
 	}
 
-	logs := logger.New(id, Name, Version, bc.Log.Level)
-	logHelper := logger.NewHelper(logs, "scope", "server")
+	logs := logger.New(id, Name, Version, bc.Log.Level, bc.Env, bc.Sentry.Level)
 
 	metric, err := metrics.New(bc.Metrics.Address, Name, bc.Metrics.Mute)
 	if err != nil {
@@ -122,23 +108,60 @@ func run() error {
 		return err
 	}
 
-	yandexConf := bc.S3.Yandex
-	yandexClient, err := yandex.New(yandexConf.AccessKeyId, yandexConf.SecretAccessKey, metric, logs)
+	s3 := selectS3Config(bc.S3)
+	minioClient, err := minio.New(s3.Endpoint, s3.BucketLocation, s3.BucketName, s3.AccessKeyID, s3.SecretAccessKey, metric, logs)
 	if err != nil {
 		return err
 	}
 
-	app, err := wireApp(ctx, database, bc.Server, authClient, yandexClient, metric, logs)
+	app, err := wireApp(ctx, database, bc.Server, bc.Auth, authClient, minioClient, metric, logs)
 	if err != nil {
 		panic(err)
 	}
 
-	// start and wait for stop signal
-	if err = app.Run(); err != nil {
-		return err
+	return app.Run()
+}
+
+type S3Config struct {
+	Endpoint        string
+	BucketLocation  string
+	BucketName      string
+	AccessKeyID     string
+	SecretAccessKey string
+}
+
+func selectS3Config(s3 *conf.S3) *S3Config {
+	switch s3.Current {
+	case `vk`:
+		return &S3Config{
+			Endpoint:        s3.Vk.Endpoint,
+			BucketLocation:  s3.Vk.BucketLocation,
+			BucketName:      s3.Vk.BucketName,
+			AccessKeyID:     s3.Vk.AccessKeyID,
+			SecretAccessKey: s3.Vk.SecretAccessKey,
+		}
+	case `yandex`:
+		return &S3Config{
+			Endpoint:        s3.Yandex.Endpoint,
+			BucketLocation:  s3.Yandex.BucketLocation,
+			BucketName:      s3.Yandex.BucketName,
+			AccessKeyID:     s3.Yandex.AccessKeyID,
+			SecretAccessKey: s3.Yandex.SecretAccessKey,
+		}
 	}
+	panic(fmt.Sprintf(`unknown s3 current value: %s`, s3.Current))
+}
 
-	logHelper.Info("app terminates")
-
-	return nil
+func newApp(ctx context.Context, logger log.Logger, hs *http.Server) *kratos.App {
+	return kratos.New(
+		kratos.ID(id),
+		kratos.Name(Name),
+		kratos.Version(Version),
+		kratos.Metadata(map[string]string{}),
+		kratos.Logger(logger),
+		kratos.Context(ctx),
+		kratos.Server(
+			hs,
+		),
+	)
 }

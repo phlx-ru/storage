@@ -2,28 +2,32 @@ package server
 
 import (
 	"fmt"
+	"strings"
 	"time"
-
-	"storage/api/storage"
-	"storage/internal/service"
-
-	"storage/internal/conf"
-	"storage/internal/middlewares"
-	"storage/internal/pkg/metrics"
 
 	"github.com/gin-gonic/gin"
 	kgin "github.com/go-kratos/gin"
-	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	kratosHTTP "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/phlx-ru/hatchet/metrics"
+	"github.com/phlx-ru/hatchet/middlewares"
+
+	"storage/internal/conf"
+	"storage/internal/service"
+	storage "storage/schema"
+)
+
+const (
+	metricPrefix = `server`
 )
 
 // NewHTTPServer new HTTP server.
 func NewHTTPServer(
+	a *conf.Auth,
 	c *conf.Server,
 	ss *service.StorageService,
 	metric metrics.Metrics,
-	logger log.Logger,
 ) *kratosHTTP.Server {
 	var opts = []kratosHTTP.ServerOption{
 		kratosHTTP.Timeout(c.Http.Timeout.AsDuration()),
@@ -61,12 +65,26 @@ func NewHTTPServer(
 		),
 		gin.Recovery(),
 		kgin.Middlewares(
-			middlewares.Duration(metric, logger),
+			middlewares.Duration(metric, metricPrefix),
 			tracing.Server(),
+			recovery.Recovery(),
 		),
 	)
-	router.Static(`/auth`, `./static/auth`)
-	router.Static(`/swagger`, `./static/swagger`)
+	router.Static(`/form`, `./static/form`)
+	router.
+		Use(cors(`*`, strings.Join([]string{
+			`GET`,
+			`POST`,
+			`DELETE`,
+			`PUT`,
+			`PATCH`,
+			`OPTIONS`,
+		}, `, `), strings.Join([]string{
+			`Content-Type`,
+			`Authorization`,
+			`X-Integrations-Token`,
+		}, `, `))).
+		Static(`/swagger`, `./static/swagger`)
 
 	router.GET(`/api/swagger`, ss.GetSwagger)
 
@@ -99,4 +117,12 @@ func LogFormatter(param gin.LogFormatterParams) string {
 		param.Path,
 		param.ErrorMessage,
 	)
+}
+
+func cors(origin, methods, headers string) gin.HandlerFunc {
+	return func(context *gin.Context) {
+		context.Header("Access-Control-Allow-Origin", origin)
+		context.Header("Access-Control-Allow-Methods", methods)
+		context.Header("Access-Control-Allow-Headers", headers)
+	}
 }

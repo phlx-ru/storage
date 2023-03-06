@@ -2,10 +2,136 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FORM</title>
+    <title>Storage | Upload form</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+          integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css"
+          integrity="sha512-xiunq9hpKsIcz42zt0o2vCo34xV0j6Ny8hgEylN3XBglZDtTZ2nwnqF/Z/TTCc18sGdvCjbFInNd++6q3J0N6g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.2.47/vue.global.min.js"
+            integrity="sha512-DJ2+sosWB5FnZAIeCWAHu2gxQ7Gi438oOZLcBQSOrW8gD0s7LIXDv/5RW76B3FcljF40BXnfqNIo6Dhp7dFHJg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
-<h1>// TODO Make form for upload</h1>
+
+<div id="app">
+    <template v-if="state === 'mounting'">
+        <div style="width: 400px; margin: 100px auto"><h1 style="text-align: center">Loading...</h1></div>
+    </template>
+    <template v-if="state === 'mounted'">
+        <form style="width: 400px; margin: 100px auto">
+            <fieldset>
+                <label for="token">Укажите авторизационный токен<br/>(Bearer JWT or X-Integrations-Token):</label>
+                <input type="text" id="token" name="token" placeholder="Auth or Integrations Token" v-model="token"/>
+                <label for="file">Выберите файл для загрузки:</label>
+                <input type="file" id="file" name="file" ref="file" accept="image/*,.pdf" @change="onFileChange"/>
+                <input type="submit" class="button button-outline" value="send" @click.prevent="onSendClick"/>
+                <template v-if="file">
+                    <label for="filename">Filename</label>
+                    <input type="text" id="filename" disabled v-model="file.name"/>
+                    <label for="size">Size</label>
+                    <input type="text" id="size" disabled v-model="file.size"/>
+                    <label for="type">MIME type</label>
+                    <input type="text" id="type" disabled v-model="file.type"/>
+                </template>
+            </fieldset>
+        </form>
+    </template>
+    <template v-if="state === 'uploading'">
+        <div style="width: 400px; margin: 100px auto"><h1 style="text-align: center">Uploading...</h1></div>
+    </template>
+    <template v-if="state === 'uploaded'">
+        <div style="width: 800px; margin: 100px auto">
+            <h1 style="text-align: center">Result:</h1>
+            <pre v-text="resultJSON"></pre>
+            <p>Download: <a v-if="result.uid" :href="url(result.uid)" target="_blank" v-text="url(result.uid)"></a></p>
+        </div>
+    </template>
+    <template v-if="state === 'error'">
+        <div style="width: 400px; margin: 100px auto">
+            <h1 style="text-align: center" v-text="error"></h1>
+            <p style="text-align: center"><button class="button button-outline" @click="reload">reload</button></p>
+        </div>
+    </template>
+</div>
+
+<script>
+    const {createApp} = Vue
+    createApp({
+        data() {
+            return {
+                state: 'mounting',
+                token: '',
+                filename: '',
+                file: '',
+                data: null,
+                error: '',
+                result: {},
+                resultJSON: ''
+            }
+        },
+        mounted() {
+            this.state = 'mounted'
+        },
+        methods: {
+            onSendClick() {
+                if (!this.validate()) {
+                    this.state = 'error'
+                    return
+                }
+                this.state = 'uploading'
+                let reader = new FileReader()
+                reader.onload = e => {
+                    this.data = e.target.result
+                    this.fetch()
+                }
+                reader.readAsArrayBuffer(this.file)
+            },
+            fetch() {
+                fetch(`/api/1/upload?filename=${this.filename}`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${this.token}`,
+                        'X-Integrations-Token': this.token,
+                        'Content-Length': this.file.size,
+                        'Content-Type': this.file.type,
+                    },
+                    body: this.data
+                }).then(response => response.json()).then(result => {
+                    this.result = result
+                    this.resultJSON = JSON.stringify(result, null, 2)
+                    this.state = 'uploaded'
+                })
+            },
+            onFileChange(event) {
+                if (event?.target?.files?.length) {
+                    this.filename = encodeURIComponent(event.target.files[0].name)
+                    this.file = event.target.files[0]
+                }
+            },
+            reload() {
+                window.document.location.reload()
+            },
+            validate() {
+                if (!this.token) {
+                    this.error = 'token is empty'
+                }
+                if (!this.filename) {
+                    this.error = 'filename is empty'
+                }
+                if (!this.$refs['file'].files[0]) {
+                    this.error = 'file is empty'
+                }
+                return this.error === ''
+            },
+            url(uid) {
+                return window.document.location.origin + '/api/1/download/' + uid
+            }
+        }
+    }).mount('#app')
+</script>
 </body>
 </html>

@@ -6,47 +6,43 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/phlx-ru/hatchet/logger"
+	"github.com/phlx-ru/hatchet/metrics"
+	"github.com/phlx-ru/hatchet/watcher"
 
 	"storage/ent"
 	"storage/ent/predicate"
-	"storage/internal/biz"
-	"storage/internal/pkg/logger"
-	"storage/internal/pkg/metrics"
-	"storage/internal/pkg/strings"
 )
 
 const (
 	metricPrefix = `data.file`
 )
 
-type fileRepo struct {
-	data   Database
-	metric metrics.Metrics
-	logs   *log.Helper
+type FileRepo struct {
+	data    Database
+	metric  metrics.Metrics
+	logs    *log.Helper
+	watcher *watcher.Watcher
 }
 
-func NewFileRepo(data Database, logs log.Logger, metric metrics.Metrics) biz.FileRepo {
-	return &fileRepo{
-		data:   data,
-		metric: metric,
-		logs:   logger.NewHelper(logs, `ts`, log.DefaultTimestamp, `scope`, `data/file`),
+func NewFileRepo(data Database, logs log.Logger, metric metrics.Metrics) *FileRepo {
+	loggerHelper := logger.NewHelper(logs, `ts`, log.DefaultTimestamp, `scope`, metricPrefix)
+	return &FileRepo{
+		data:    data,
+		metric:  metric,
+		logs:    loggerHelper,
+		watcher: watcher.New(metricPrefix, loggerHelper, metric),
 	}
 }
 
-func (f *fileRepo) postProcess(ctx context.Context, method string, err error) {
-	if err != nil {
-		f.logs.WithContext(ctx).Errorf(`file repo method %s failed: %v`, method, err)
-		f.metric.Increment(strings.Metric(metricPrefix, method, `failure`))
-	} else {
-		f.metric.Increment(strings.Metric(metricPrefix, method, `success`))
-	}
-}
-
-func (f *fileRepo) Create(ctx context.Context, file *ent.File) (*ent.File, error) {
-	method := `create`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) Create(ctx context.Context, file *ent.File) (*ent.File, error) {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`Create`).WithFields(map[string]any{
+		"filename":   file.Filename,
+		"objectPath": file.ObjectPath,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	creating := f.client(ctx).Create().
 		SetUserID(file.UserID).
@@ -64,11 +60,13 @@ func (f *fileRepo) Create(ctx context.Context, file *ent.File) (*ent.File, error
 	return created, err
 }
 
-func (f *fileRepo) Delete(ctx context.Context, uid string) error {
-	method := `delete`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) Delete(ctx context.Context, uid string) error {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`Delete`).WithFields(map[string]any{
+		"uid": uid,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	_, err = f.client(ctx).
 		Update().
@@ -79,11 +77,13 @@ func (f *fileRepo) Delete(ctx context.Context, uid string) error {
 	return err
 }
 
-func (f *fileRepo) Restore(ctx context.Context, uid string) error {
-	method := `restore`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) Restore(ctx context.Context, uid string) error {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`Restore`).WithFields(map[string]any{
+		"uid": uid,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	_, err = f.client(ctx).
 		Update().
@@ -94,11 +94,13 @@ func (f *fileRepo) Restore(ctx context.Context, uid string) error {
 	return err
 }
 
-func (f *fileRepo) FindByUID(ctx context.Context, uid string) (*ent.File, error) {
-	method := `findByUID`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) FindByUID(ctx context.Context, uid string) (*ent.File, error) {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`FindByUID`).WithFields(map[string]any{
+		"uid": uid,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	file, err := f.client(ctx).
 		Query().
@@ -109,11 +111,13 @@ func (f *fileRepo) FindByUID(ctx context.Context, uid string) (*ent.File, error)
 	return file, err
 }
 
-func (f *fileRepo) FindByUserID(ctx context.Context, userID, limit, offset int) ([]*ent.File, error) {
-	method := `findByUserID`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) FindByUserID(ctx context.Context, userID, limit, offset int) ([]*ent.File, error) {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`FindByUID`).WithFields(map[string]any{
+		"userID": userID,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	file, err := f.client(ctx).
 		Query().
@@ -126,37 +130,45 @@ func (f *fileRepo) FindByUserID(ctx context.Context, userID, limit, offset int) 
 	return file, err
 }
 
-func (f *fileRepo) FindByFilename(ctx context.Context, filename string) ([]*ent.File, error) {
-	method := `findByFilename`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) FindByFilename(ctx context.Context, filename string) (*ent.File, error) {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`FindByFilename`).WithFields(map[string]any{
+		"filename": filename,
+	}).WithIgnoredErrorsChecks([]func(error) bool{
+		ent.IsNotFound,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	file, err := f.client(ctx).
 		Query().
 		Where(fileFilterActive()).
 		Where(fileFilterByFilename(filename)).
-		All(ctx)
+		First(ctx)
 
 	return file, err
 }
 
-func (f *fileRepo) FindByObjectPath(ctx context.Context, objectPath string) ([]*ent.File, error) {
-	method := `findByObjectPath`
-	defer f.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (f *FileRepo) FindByObjectPath(ctx context.Context, objectPath string) (*ent.File, error) {
 	var err error
-	defer func() { f.postProcess(ctx, method, err) }()
+	defer f.watcher.OnPreparedMethod(`FindByObjectPath`).WithFields(map[string]any{
+		"objectPath": objectPath,
+	}).WithIgnoredErrorsChecks([]func(error) bool{
+		ent.IsNotFound,
+	}).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 
 	file, err := f.client(ctx).
 		Query().
 		Where(fileFilterActive()).
 		Where(fileFilterByObjectPath(objectPath)).
-		All(ctx)
+		First(ctx)
 
 	return file, err
 }
 
-func (f *fileRepo) client(ctx context.Context) *ent.FileClient {
+func (f *FileRepo) client(ctx context.Context) *ent.FileClient {
 	return client(f.data)(ctx).File
 }
 

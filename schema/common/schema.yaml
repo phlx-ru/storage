@@ -9,21 +9,19 @@ paths:
   # here for schema compatibility
 
 components:
+
   parameters:
-    authTokenInHeaders:
-      name: x-auth-token
-      description: Auth token from Headers
-      in: header
-      required: false
-      schema:
-        $ref: "#/components/schemas/propertyAuthToken"
-    authTokenInQuery:
-      name: authToken
-      description: Auth token from Query
+    filename:
+      name: filename
+      description: Filename
       in: query
-      required: false
+      required: true
       schema:
-        $ref: "#/components/schemas/propertyAuthToken"
+        description: Filename
+        type: string
+        example: sicp.pdf
+      x-oapi-codegen-extra-tags:
+        validate: "required,min=3,max=255"
 
   responses:
     errorCommon:
@@ -84,8 +82,3 @@ components:
               description: Error message
               type: string
               example: There is something wrong
-
-    propertyAuthToken:
-      type: string
-      description: Авторизационный токен для пользовательской сессии
-      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLGF1dGgiLCJleHAiOjc5NTOxMTU3NDJ9.vNkWaAqvTUtgzVSAhJJDJ90QLpBIMlYd_8keQb1qVH8

@@ -6,6 +6,8 @@ CLUSTER           := swarm
 DOTENV            := .env
 SERVICES          := server
 REGISTRY_HOST     := $(shell cat $(INFRA_DIRECTORY)/$(DOTENV) | grep "REGISTRY_HOST" | cut -d "=" -f 2)
+STORAGE_PATH      := /storage
+STAGING_SSH       := ubuntu@cargo.b-resh.ru
 
 .PHONY: path
 # Show command how add Go binaries to PATH making it accessible after `go install ...`
@@ -40,7 +42,24 @@ ent:
 .PHONY: lint
 # Run linter fo Golang files
 lint:
-	@docker run --rm -v $$(pwd):/app -w /app golangci/golangci-lint:latest golangci-lint run
+	@docker run --rm -v $$(pwd):/app \
+		-e GOCACHE=/cache/go \
+		-e GOLANGCI_LINT_CACHE=/cache/go \
+		-v $$(go env GOCACHE):/cache/go \
+		-v $$(go env GOPATH)/pkg:/go/pkg \
+		-w /app golangci/golangci-lint:latest-alpine \
+		golangci-lint run --verbose --timeout 5m
+
+.PHONY: lintfix
+# Run linter fo Golang files with --fix flag
+lintfix:
+	@docker run --rm -v $$(pwd):/app \
+		-e GOCACHE=/cache/go \
+		-e GOLANGCI_LINT_CACHE=/cache/go \
+		-v $$(go env GOCACHE):/cache/go \
+		-v $$(go env GOPATH)/pkg:/go/pkg \
+		-w /app golangci/golangci-lint:latest-alpine \
+		golangci-lint run --verbose --timeout 5m --fix
 
 .PHONY: update
 # Update service in Docker Swarm without downtime
@@ -100,18 +119,41 @@ env:
 grafana:
 	@cp -u ./grafana_dashboard.json ${INFRA_DIRECTORY}/grafana/dashboards/service-${SERVICE_NAME}.json
 
+.PHONY: jwt
+# Generate JWT token for access service HTTP methods
+jwt:
+	@set -e; if [ ! -f ./bin/jwt ] ; \
+		then go build -o ./bin/jwt cmd/jwt/main.go ; \
+	fi
+	@./bin/jwt
+
 .PHONY: schema
 # Generates Golang types from OpenAPI from api/storage/schema.yaml
 schema: #
-	@oapi-codegen -config ./api/storage/common/generate.yaml ./api/storage/common/schema.yaml > ./api/storage/common/schema.gen.go
-	@oapi-codegen -config ./api/storage/storage/generate.yaml ./api/storage/storage/schema.yaml > ./api/storage/storage/schema.gen.go
-	@oapi-codegen -config ./api/storage/generate.yaml ./api/storage/schema.yaml > ./api/storage/schema.gen.go
+	@oapi-codegen -config ./schema/common/generate.yaml ./schema/common/schema.yaml > ./schema/common/schema.gen.go
+	@oapi-codegen -config ./schema/storage/generate.yaml ./schema/storage/schema.yaml > ./schema/storage/schema.gen.go
+	@oapi-codegen -config ./schema/generate.yaml ./schema/schema.yaml > ./schema/schema.gen.go
 
 .PHONY: check
 # Make all checks (recommended before commit and push)
-check: vendor all lint test
+check: vendor all ent schema combine lint test
 
 .PHONY: combine
 # Generates a combined swagger.yaml TODO make it from internal /swagger handler
 combine:
-	@swagger-combine ./api/storage/schema.yaml -f yaml -o static/swagger/swagger.yaml
+	@swagger-combine ./schema/schema.yaml -f yaml -o static/swagger/swagger.yaml
+
+.PHONY: storage
+# Make a symbolic link from /storage to current ./storage directory
+storage:
+	@set -e; if [ ! -d ${STORAGE_PATH} ] ; \
+		then mkdir -m 0775 ${STORAGE_PATH} && chgrp docker ${STORAGE_PATH} ; \
+	fi
+	@set -e; if [ ! -d $$(echo ${STORAGE_PATH} | cut -d '/' -f 2) ] ; \
+		then ln -s ${STORAGE_PATH} $$(pwd) ; \
+	fi
+
+.PHONY: deploy-staging
+# Build current state of service and deploy to staging server
+deploy-staging:
+	@make push && ssh ${STAGING_SSH} 'cd /var/www/${SERVICE_NAME} && make update'

@@ -120,35 +120,8 @@ func (fu *FileUpdate) Mutation() *FileMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (fu *FileUpdate) Save(ctx context.Context) (int, error) {
-	var (
-		err      error
-		affected int
-	)
 	fu.defaults()
-	if len(fu.hooks) == 0 {
-		affected, err = fu.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*FileMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			fu.mutation = mutation
-			affected, err = fu.sqlSave(ctx)
-			mutation.done = true
-			return affected, err
-		})
-		for i := len(fu.hooks) - 1; i >= 0; i-- {
-			if fu.hooks[i] == nil {
-				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = fu.hooks[i](mut)
-		}
-		if _, err := mut.Mutate(ctx, fu.mutation); err != nil {
-			return 0, err
-		}
-	}
-	return affected, err
+	return withHooks[int, FileMutation](ctx, fu.sqlSave, fu.mutation, fu.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -182,16 +155,7 @@ func (fu *FileUpdate) defaults() {
 }
 
 func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   file.Table,
-			Columns: file.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: file.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(file.Table, file.Columns, sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt))
 	if ps := fu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -200,80 +164,37 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := fu.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeUUID,
-			Value:  value,
-			Column: file.FieldUID,
-		})
+		_spec.SetField(file.FieldUID, field.TypeUUID, value)
 	}
 	if value, ok := fu.mutation.UserID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldUserID,
-		})
+		_spec.SetField(file.FieldUserID, field.TypeInt, value)
 	}
 	if value, ok := fu.mutation.AddedUserID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldUserID,
-		})
+		_spec.AddField(file.FieldUserID, field.TypeInt, value)
 	}
 	if value, ok := fu.mutation.Filename(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: file.FieldFilename,
-		})
+		_spec.SetField(file.FieldFilename, field.TypeString, value)
 	}
 	if value, ok := fu.mutation.ObjectPath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: file.FieldObjectPath,
-		})
+		_spec.SetField(file.FieldObjectPath, field.TypeString, value)
 	}
 	if value, ok := fu.mutation.Size(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldSize,
-		})
+		_spec.SetField(file.FieldSize, field.TypeInt, value)
 	}
 	if value, ok := fu.mutation.AddedSize(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldSize,
-		})
+		_spec.AddField(file.FieldSize, field.TypeInt, value)
 	}
 	if value, ok := fu.mutation.MimeType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: file.FieldMimeType,
-		})
+		_spec.SetField(file.FieldMimeType, field.TypeString, value)
 	}
 	if value, ok := fu.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: file.FieldUpdatedAt,
-		})
+		_spec.SetField(file.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := fu.mutation.DeletedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: file.FieldDeletedAt,
-		})
+		_spec.SetField(file.FieldDeletedAt, field.TypeTime, value)
 	}
 	if fu.mutation.DeletedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: file.FieldDeletedAt,
-		})
+		_spec.ClearField(file.FieldDeletedAt, field.TypeTime)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, fu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -283,6 +204,7 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
+	fu.mutation.done = true
 	return n, nil
 }
 
@@ -383,6 +305,12 @@ func (fuo *FileUpdateOne) Mutation() *FileMutation {
 	return fuo.mutation
 }
 
+// Where appends a list predicates to the FileUpdate builder.
+func (fuo *FileUpdateOne) Where(ps ...predicate.File) *FileUpdateOne {
+	fuo.mutation.Where(ps...)
+	return fuo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (fuo *FileUpdateOne) Select(field string, fields ...string) *FileUpdateOne {
@@ -392,41 +320,8 @@ func (fuo *FileUpdateOne) Select(field string, fields ...string) *FileUpdateOne 
 
 // Save executes the query and returns the updated File entity.
 func (fuo *FileUpdateOne) Save(ctx context.Context) (*File, error) {
-	var (
-		err  error
-		node *File
-	)
 	fuo.defaults()
-	if len(fuo.hooks) == 0 {
-		node, err = fuo.sqlSave(ctx)
-	} else {
-		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-			mutation, ok := m.(*FileMutation)
-			if !ok {
-				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			fuo.mutation = mutation
-			node, err = fuo.sqlSave(ctx)
-			mutation.done = true
-			return node, err
-		})
-		for i := len(fuo.hooks) - 1; i >= 0; i-- {
-			if fuo.hooks[i] == nil {
-				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
-			}
-			mut = fuo.hooks[i](mut)
-		}
-		v, err := mut.Mutate(ctx, fuo.mutation)
-		if err != nil {
-			return nil, err
-		}
-		nv, ok := v.(*File)
-		if !ok {
-			return nil, fmt.Errorf("unexpected node type %T returned from FileMutation", v)
-		}
-		node = nv
-	}
-	return node, err
+	return withHooks[*File, FileMutation](ctx, fuo.sqlSave, fuo.mutation, fuo.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -460,16 +355,7 @@ func (fuo *FileUpdateOne) defaults() {
 }
 
 func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   file.Table,
-			Columns: file.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: file.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(file.Table, file.Columns, sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt))
 	id, ok := fuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "File.id" for update`)}
@@ -495,80 +381,37 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) 
 		}
 	}
 	if value, ok := fuo.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeUUID,
-			Value:  value,
-			Column: file.FieldUID,
-		})
+		_spec.SetField(file.FieldUID, field.TypeUUID, value)
 	}
 	if value, ok := fuo.mutation.UserID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldUserID,
-		})
+		_spec.SetField(file.FieldUserID, field.TypeInt, value)
 	}
 	if value, ok := fuo.mutation.AddedUserID(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldUserID,
-		})
+		_spec.AddField(file.FieldUserID, field.TypeInt, value)
 	}
 	if value, ok := fuo.mutation.Filename(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: file.FieldFilename,
-		})
+		_spec.SetField(file.FieldFilename, field.TypeString, value)
 	}
 	if value, ok := fuo.mutation.ObjectPath(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: file.FieldObjectPath,
-		})
+		_spec.SetField(file.FieldObjectPath, field.TypeString, value)
 	}
 	if value, ok := fuo.mutation.Size(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldSize,
-		})
+		_spec.SetField(file.FieldSize, field.TypeInt, value)
 	}
 	if value, ok := fuo.mutation.AddedSize(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeInt,
-			Value:  value,
-			Column: file.FieldSize,
-		})
+		_spec.AddField(file.FieldSize, field.TypeInt, value)
 	}
 	if value, ok := fuo.mutation.MimeType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: file.FieldMimeType,
-		})
+		_spec.SetField(file.FieldMimeType, field.TypeString, value)
 	}
 	if value, ok := fuo.mutation.UpdatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: file.FieldUpdatedAt,
-		})
+		_spec.SetField(file.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := fuo.mutation.DeletedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: file.FieldDeletedAt,
-		})
+		_spec.SetField(file.FieldDeletedAt, field.TypeTime, value)
 	}
 	if fuo.mutation.DeletedAtCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Column: file.FieldDeletedAt,
-		})
+		_spec.ClearField(file.FieldDeletedAt, field.TypeTime)
 	}
 	_node = &File{config: fuo.config}
 	_spec.Assign = _node.assignValues
@@ -581,5 +424,6 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) 
 		}
 		return nil, err
 	}
+	fuo.mutation.done = true
 	return _node, nil
 }

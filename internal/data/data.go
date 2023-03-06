@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"time"
 
-	"storage/ent"
-	"storage/internal/conf"
-	"storage/internal/pkg/metrics"
-	"storage/internal/pkg/slices"
-
 	entDialectSQL "entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/schema"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	_ "github.com/lib/pq" // postgres driver for Go's database/sql package
+	"github.com/phlx-ru/hatchet/metrics"
+	"github.com/phlx-ru/hatchet/slices"
+
+	"storage/ent"
+	"storage/internal/conf"
 )
 
 const (

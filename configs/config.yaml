@@ -1,5 +1,11 @@
+env: ${ENV:local}
 log:
   level: ${LOG_LEVEL:debug} # vendor/github.com/go-kratos/kratos/v2/log/level.go
+sentry:
+  enabled: ${SENTRY_ENABLED:false}
+  dsn: ${SENTRY_DSN:""}
+  level: ${SENTRY_LEVEL:warn}
+  flushTimeout: ${SENTRY_FLUSH_TIMEOUT:2s}
 metrics:
   address: ${METRICS_ADDRESS:localhost:8125}
   mute: ${METRICS_MUTE:true}
@@ -13,15 +19,27 @@ data:
     source: host=${POSTGRES_HOST:localhost} port=${POSTGRES_PORT:5432} user=${POSTGRES_USER:postgres} password=${POSTGRES_PASS:postgres} dbname=${POSTGRES_DB:storage} sslmode=disable
     migrate: ${DATA_DATABASE_MIGRATE:soft} # (soft|hard|none)
     debug: ${DATA_DATABASE_DEBUG:false}
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+storage:
+  path: ${STORAGE_PATH:./storage}
 client:
   grpc:
     auth:
       endpoint: ${CLIENT_GRPC_AUTH_ENDPOINT:auth-server:9000}
       timeout: ${CLIENT_GRPC_AUTH_TIMEOUT:10s}
 s3:
+  current: ${S3_CURRENT:vk}
   yandex:
     endpoint: ${S3_YANDEX_ENDPOINT:some-bucket-storage.storage.yandexcloud.net}
     bucketLocation: ${S3_YANDEX_BUCKET_LOCATION:ru-central1}
     bucketName: ${S3_YANDEX_BUCKET_NAME:main}
-    accessKeyId: ${S3_YANDEX_ACCESS_KEY_ID}
+    accessKeyID: ${S3_YANDEX_ACCESS_KEY_ID}
     secretAccessKey: ${S3_YANDEX_SECRET_ACCESS_KEY}
+  vk:
+    endpoint: ${S3_VK_ENDPOINT:some-bucket-storage.hb.bizmrg.com}
+    bucketLocation: ${S3_VK_BUCKET_LOCATION:ru-central1}
+    bucketName: ${S3_VK_BUCKET_NAME:main}
+    accessKeyID: ${S3_VK_ACCESS_KEY_ID}
+    secretAccessKey: ${S3_VK_SECRET_ACCESS_KEY}

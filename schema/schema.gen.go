@@ -13,8 +13,8 @@ import (
 	"path"
 	"strings"
 
-	externalRef0 "storage/api/storage/common"
-	externalRef1 "storage/api/storage/storage"
+	externalRef0 "storage/schema/common"
+	externalRef1 "storage/schema/storage"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -22,19 +22,14 @@ import (
 )
 
 const (
-	BearerAuthScopes = "BearerAuth.Scopes"
+	IntegrationsScopes = "integrations.Scopes"
+	JwtScopes          = "jwt.Scopes"
 )
-
-// FilesListParams defines parameters for FilesList.
-type FilesListParams struct {
-	// Auth token from Query
-	AuthToken *externalRef0.AuthTokenInQuery `form:"authToken,omitempty" json:"authToken,omitempty"`
-}
 
 // UploadParams defines parameters for Upload.
 type UploadParams struct {
-	// Auth token from Query
-	AuthToken *externalRef0.AuthTokenInQuery `form:"authToken,omitempty" json:"authToken,omitempty"`
+	// Filename
+	Filename externalRef0.Filename `form:"filename" json:"filename" validate:"required,min=3,max=255"`
 }
 
 // ServerInterface represents all server handlers.
@@ -44,7 +39,7 @@ type ServerInterface interface {
 	Download(c *gin.Context, uid externalRef1.Uid)
 
 	// (GET /api/1/files/list)
-	FilesList(c *gin.Context, params FilesListParams)
+	FilesList(c *gin.Context)
 
 	// (POST /api/1/upload)
 	Upload(c *gin.Context, params UploadParams)
@@ -72,7 +67,9 @@ func (siw *ServerInterfaceWrapper) Download(c *gin.Context) {
 		return
 	}
 
-	c.Set(BearerAuthScopes, []string{""})
+	c.Set(IntegrationsScopes, []string{""})
+
+	c.Set(JwtScopes, []string{""})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -84,29 +81,15 @@ func (siw *ServerInterfaceWrapper) Download(c *gin.Context) {
 // FilesList operation middleware
 func (siw *ServerInterfaceWrapper) FilesList(c *gin.Context) {
 
-	var err error
+	c.Set(IntegrationsScopes, []string{""})
 
-	c.Set(BearerAuthScopes, []string{""})
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params FilesListParams
-
-	// ------------- Optional query parameter "authToken" -------------
-	if paramValue := c.Query("authToken"); paramValue != "" {
-
-	}
-
-	err = runtime.BindQueryParameter("form", true, false, "authToken", c.Request.URL.Query(), &params.AuthToken)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter authToken: %s", err)})
-		return
-	}
+	c.Set(JwtScopes, []string{""})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
 	}
 
-	siw.Handler.FilesList(c, params)
+	siw.Handler.FilesList(c)
 }
 
 // Upload operation middleware
@@ -114,19 +97,24 @@ func (siw *ServerInterfaceWrapper) Upload(c *gin.Context) {
 
 	var err error
 
-	c.Set(BearerAuthScopes, []string{""})
+	c.Set(IntegrationsScopes, []string{""})
+
+	c.Set(JwtScopes, []string{""})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params UploadParams
 
-	// ------------- Optional query parameter "authToken" -------------
-	if paramValue := c.Query("authToken"); paramValue != "" {
+	// ------------- Required query parameter "filename" -------------
+	if paramValue := c.Query("filename"); paramValue != "" {
 
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument filename is required, but not found"})
+		return
 	}
 
-	err = runtime.BindQueryParameter("form", true, false, "authToken", c.Request.URL.Query(), &params.AuthToken)
+	err = runtime.BindQueryParameter("form", true, true, "filename", c.Request.URL.Query(), &params.Filename)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter authToken: %s", err)})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter filename: %s", err)})
 		return
 	}
 
@@ -167,24 +155,27 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+yX324bxRfHX2U0v99FKzm7dgMI9o4KVSp/JERagRRbysSe2Nt6Z5bZdSwTWYodUoga",
+	"UYqQuAQuuN+42Xjj2M4rnHkFngSd2fXfxKUokXrTGyee7Jw95zvf85mTPVqWni8FF2FAnT0a8HJDuWFr",
+	"o1zjHjdLrgh5VbHQlcJ8r/CgrFwfv1OHfvr1ozXdhTEMIIYRgVO40C8IJDDSXYjhld6HSD+DBM6tooBf",
+	"YAx9GMIYzmAEYwKXMIYLfaB/gER39TGBEUTE7BzoA30EMQyJ7kCs96FnPmOiO+m2IYz1kT7WPxEYmK8R",
+	"jOBUP3eKoigI2dra2mZBDX8tV4i9y5TdbDbtKgt5k7VIsZHP3/sg/SQee8rJk2aY7SsKmqMuVlfjrMIV",
+	"zVHBPE4d+s3awzk11h7JpxyfDVs+/pX57me8Rds5+qQZolTbnCmuHkjlsTDViuaW9IOfoYf66X1IoJ9p",
+	"NYYRjPRzOCdz0t5hjbBm3njXIqQo4Pdl7eZ0RRk3dUd3UX8YQaKfQUwguuZlSemOjaHtu5YpPDBHT50s",
+	"+1l5tTD0abvdRm125FUrbKyTjVAqVuXk4y8fTqwwPb1Ed2AMPVJmqirNm0I3rGPgIN1Fc3SXqyANVrAK",
+	"VgGllD4XzHepQ9etvLVOc9RnYc040Wa+axfsimyKumQVe6/hVtpX84I/YQARygQ9iCDWXaK/hwjO4QLN",
+	"tGCviMAJxNAncKn3MV2zOoBkhXapZFVujlv6PHXGwwp16CdZWjRHFQ98KYK0n+7l8/jj/4rvUIdadla9",
+	"bXRnVot59f/Zs660p5unhaIs7y1FKUvPk+INgnClpLrPKl/xbxs8CNNYhRvEeizQPVK53/E0s3sf3SDa",
+	"Iym/YKKVZRdgwPdvVCo2rBKsTtG4E7xRZ3MZbJulrG03S+1SjoasiotTb5baaDzFPB5yFZj9b3yCs312",
+	"w61QDB80PI+p1lV3jiBBxmX+RBguOxQlyZy/49Z5YNfdILzG9SlrewbAR5nvkQtwgibG9oxSzOjDKbYH",
+	"EMEZnMIYXs3ofAx90wmR4fKFPtYdQ1x8ZJZojmBXIPD1AZwhsZBEaRyk0cb6mj6c0AguIEG6r+6eB1ja",
+	"51jZrbXPzjTku/55K/0zZ/rZ3RVPLN+BS3NHDND0E1vhhTG5SOanAmOrRSKPs/4Zvd69L+b6p+EbnF7t",
+	"nd/mnLx0Y6QTylxH3nZ+Frm+dcf6R0jgBF+RIxDrDjbRyh7FPOMVKVgE/oDIDGIm//5itWaOWGxugivT",
+	"UcIcGvl7/1dipq6B7kACQ30AQ1LI53ERBUDQRHBuJpgeFoWqpWce4XkfmBOP9SGGT9k20i/TSrtmoWtm",
+	"vSmnYIj1roLMfLLZY6mfEmIQpF/CkKCbTkzp8QIA02t8Fd//pWHm8I6IMaMitoAvg2vA9tifDgWmRe/L",
+	"Sus/Am2yz+XBxMLtW6PkLOA7RL5VRM4Y1F9kYnQNg6ZXq8EpQs6konYnZl4EHM7nUpAgZFVXVAkXu66S",
+	"wuMCr9uGqmfTfuDYE+dYZmy3ttcUD2qWatB2bkXQuiyzOnHFjmIrg2FmbpkHlnm4Jo1JXhuvwrcb1YV4",
+	"jm1Pdzsf5vN5OifqFaL/tTx6zP6pm+jfLrX/CQAA//+zlHUtDw8AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

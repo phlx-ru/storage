@@ -1,9 +1,9 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   version: 1.1.1
   title: storage
-  description: Storage service for Cargo
-  termsOfService: http://swagger.io/terms/
+  description: |
+    S3 Storage API для сервисов cargo
 servers:
   - url: https://storage.cargo.b-resh.ru
     description: API on staging environment
@@ -14,6 +14,26 @@ servers:
 tags:
   - name: storage
     description: Хранилище
+components:
+  securitySchemes:
+    jwt:
+      description: |
+        Авторизационный токен (authToken).  
+        Получить можно на [странице авторизации](/auth/).
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    integrations:
+      description: |
+        JWT-токен для интеграций.
+        Возможно получить на текущем сервере с помощью команды:
+
+          ```bash
+          cd /var/www/gateway && make jwt
+          ```
+      type: apiKey
+      in: header
+      name: X-Integrations-Token
 paths:
   /api/1/upload:
     summary: Загрузка файла на сервер хранения
@@ -23,21 +43,22 @@ paths:
       файла ограничен — максимум 100 мегабайтов. В случае успеха вернёт ответ с
       данными загруженного файла и записи о нём в базе данных.
     parameters:
-      - name: authToken
-        description: Auth token from Query
+      - name: filename
+        description: Filename
         in: query
-        required: false
+        required: true
         schema:
+          description: Filename
           type: string
-          description: Авторизационный токен для пользовательской сессии
-          example: >-
-            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLGF1dGgiLCJleHAiOjc5NTOxMTU3NDJ9.vNkWaAqvTUtgzVSAhJJDJ90QLpBIMlYd_8keQb1qVH8
+          example: sicp.pdf
+        x-oapi-codegen-extra-tags:
+          validate: required,min=3,max=255
     post:
       tags:
         - storage
       security:
-        - BearerAuth:
-            - ''
+        - jwt: []
+          integrations: []
       operationId: Upload
       requestBody:
         required: true
@@ -53,8 +74,13 @@ paths:
             application/json:
               schema:
                 type: object
-                description: upload ok reply
+                description: file item
                 additionalProperties: false
+                required:
+                  - uid
+                  - userId
+                  - filename
+                  - objectPath
                 properties:
                   uid: &ref_1
                     type: string
@@ -62,11 +88,9 @@ paths:
                     example: 123e4567-e89b-12d3-a456-426614174000
                   userId:
                     type: integer
-                    description: >-
-                      Идентификатор авторизованного пользователя, к которому
-                      привязан файл
+                    description: Уникальный идентификатор пользователя
                     example: 1
-                  filename:
+                  filename: &ref_6
                     type: string
                     description: >-
                       Название файла с расширением, с таким названием файл будет
@@ -74,16 +98,16 @@ paths:
                     example: >-
                       С. Рассел, П. Норвиг ~ Искусственный интеллект современный
                       подход (AIMA-2), 2-е издание, 2007.pdf
-                  objectPath:
+                  objectPath: &ref_7
                     type: string
                     description: Расположение файла на S3-хранилище
                     example: >-
                       1/s-rassel-p-norvig-iskusstvennyi-intellekt-sovremennyi-podkhod-aima-2-2-e-izdanie-2007.pdf
-                  size:
+                  size: &ref_8
                     type: integer
                     description: Размер файла в байтах
                     example: 12843018
-                  mimeType:
+                  mimeType: &ref_9
                     type: string
                     description: MIME-тип файла
                     example: application/pdf
@@ -146,8 +170,8 @@ paths:
       tags:
         - storage
       security:
-        - BearerAuth:
-            - ''
+        - jwt: []
+          integrations: []
       operationId: Download
       responses:
         '200':
@@ -158,9 +182,47 @@ paths:
         '401': *ref_3
         '429': *ref_4
         '500': *ref_5
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+  /api/1/files/list:
+    summary: Получение списка файлов для текущего авторизованного пользователя
+    description: >
+      Возвращает набор данных для каждого пользовательского файла, загруженного
+      на S3-хранилище
+    get:
+      tags:
+        - storage
+      security:
+        - jwt: []
+          integrations: []
+      operationId: FilesList
+      responses:
+        '200':
+          description: files list
+          content:
+            application/json:
+              schema:
+                type: object
+                description: upload ok reply
+                additionalProperties: false
+                required:
+                  - files
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      description: file item
+                      additionalProperties: false
+                      required:
+                        - uid
+                        - filename
+                        - objectPath
+                      properties:
+                        uid: *ref_1
+                        filename: *ref_6
+                        objectPath: *ref_7
+                        size: *ref_8
+                        mimeType: *ref_9
+        '400': *ref_2
+        '401': *ref_3
+        '429': *ref_4
+        '500': *ref_5

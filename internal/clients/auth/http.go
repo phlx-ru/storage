@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/phlx-ru/hatchet/logger"
+	"github.com/phlx-ru/hatchet/metrics"
+	"github.com/phlx-ru/hatchet/watcher"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	v1 "storage/api/auth/v1"
-	"storage/internal/pkg/logger"
-	"storage/internal/pkg/metrics"
-	"storage/internal/pkg/strings"
 )
 
 const (
@@ -28,9 +28,10 @@ type Client interface {
 }
 
 type Auth struct {
-	client v1.AuthClient
-	metric metrics.Metrics
-	logger *log.Helper
+	client  v1.AuthClient
+	metric  metrics.Metrics
+	logger  *log.Helper
+	watcher *watcher.Watcher
 }
 
 func New(
@@ -44,10 +45,12 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+	loggerHelper := logger.NewHelper(logs, `ts`, log.DefaultTimestamp, `scope`, metricPrefix)
 	return &Auth{
-		client: v1.NewAuthClient(client),
-		metric: metric,
-		logger: logger.NewHelper(logs, `ts`, log.DefaultTimestamp, `scope`, `clients/auth`),
+		client:  v1.NewAuthClient(client),
+		metric:  metric,
+		logger:  loggerHelper,
+		watcher: watcher.New(metricPrefix, loggerHelper, metric),
 	}, nil
 }
 
@@ -71,21 +74,11 @@ type CheckResult struct {
 	Session *Session `json:"session"`
 }
 
-func (a *Auth) postProcess(ctx context.Context, method string, err error) {
-	if err != nil {
-		a.logger.WithContext(ctx).Errorf(`client auth method %s failed: %v`, method, err)
-		a.metric.Increment(strings.Metric(metricPrefix, method, `failure`))
-	} else {
-		a.metric.Increment(strings.Metric(metricPrefix, method, `success`))
-	}
-}
-
 func (a *Auth) Check(ctx context.Context, token string) (*CheckResult, error) {
-	method := `check`
-	defer a.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
 	var err error
-	defer func() { a.postProcess(ctx, method, err) }()
-
+	defer a.watcher.OnPreparedMethod(`Check`).Results(func() (context.Context, error) {
+		return ctx, err
+	})
 	res, err := a.client.Check(ctx, &v1.CheckRequest{Token: token})
 	if err != nil {
 		if statusErr, ok := status.FromError(err); ok {

@@ -1,10 +1,10 @@
-openapi: 3.0.0 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md
+openapi: 3.0.3 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md
 
 info:
   version: 1.1.1
   title: storage
-  description: Storage service for Cargo
-  termsOfService: http://swagger.io/terms/
+  description: >
+    S3 Storage API для сервисов cargo
 
 servers:
   - url: https://storage.cargo.b-resh.ru
@@ -18,6 +18,29 @@ tags:
   - name: storage
     description: Хранилище
 
+components:
+  securitySchemes:
+    jwt:
+      description: >
+        Авторизационный токен (authToken).  
+        
+        Получить можно на [странице авторизации](/auth/).
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    integrations:
+      description: >
+        JWT-токен для интеграций.
+        
+        Возможно получить на текущем сервере с помощью команды:
+
+          ```bash
+          cd /var/www/gateway && make jwt
+          ```
+      type: apiKey
+      in: header
+      name: X-Integrations-Token
+
 paths:
 
   /api/1/upload:
@@ -28,11 +51,10 @@ paths:
       Размер загружаемого файла ограничен — максимум 100 мегабайтов.
       В случае успеха вернёт ответ с данными загруженного файла и записи о нём в базе данных.
     parameters:
-      - $ref: "./common/schema.yaml#/components/parameters/authTokenInQuery"
+      - $ref: "./common/schema.yaml#/components/parameters/filename"
     post:
       tags: [ 'storage' ]
-      security:
-        - BearerAuth: [""]
+      security: [ { jwt: [ ], integrations: [ ] } ]
       operationId: Upload
       requestBody:
         $ref: "./storage/schema.yaml#/components/requestBodies/upload"
@@ -56,8 +78,7 @@ paths:
       - $ref: "./storage/schema.yaml#/components/parameters/uid"
     get:
       tags: [ 'storage' ]
-      security:
-        - BearerAuth: [ "" ]
+      security: [ { jwt: [ ], integrations: [ ] } ]
       operationId: Download
       responses:
         '200':
@@ -71,16 +92,13 @@ paths:
         '500':
           $ref: "./common/schema.yaml#/components/responses/errorInternal"
 
-  /api/1/files/list:
+  /api/1/files/list: # TODO IMPROVE OR DELETE
     summary: Получение списка файлов для текущего авторизованного пользователя
     description: >
       Возвращает набор данных для каждого пользовательского файла, загруженного на S3-хранилище
-    parameters:
-      - $ref: "./common/schema.yaml#/components/parameters/authTokenInQuery"
     get:
       tags: [ 'storage' ]
-      security:
-        - BearerAuth: [ "" ]
+      security: [ { jwt: [ ], integrations: [ ] } ]
       operationId: FilesList
       responses:
         '200':
@@ -93,10 +111,3 @@ paths:
           $ref: "./common/schema.yaml#/components/responses/errorTooManyRequests"
         '500':
           $ref: "./common/schema.yaml#/components/responses/errorInternal"
-
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT

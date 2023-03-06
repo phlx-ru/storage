@@ -6,16 +6,27 @@ option go_package = "storage/internal/conf;conf";
 import "google/protobuf/duration.proto";
 
 message Bootstrap {
-  Log log = 1;
-  Metrics metrics = 2;
-  Server server = 3;
-  Data data = 4;
-  Client client = 5;
-  S3 s3 = 6;
+  string env = 1;
+  Log log = 2;
+  Sentry sentry = 3;
+  Metrics metrics = 4;
+  Server server = 5;
+  Data data = 6;
+  Auth auth = 7;
+  Storage storage = 8;
+  Client client = 9;
+  S3 s3 = 10;
 }
 
 message Log {
   string level = 1;
+}
+
+message Sentry {
+  bool enabled = 1;
+  string dsn = 2;
+  string level = 3;
+  string flushTimeout = 4;
 }
 
 message Metrics {
@@ -47,6 +58,17 @@ message Data {
   Database database = 1;
 }
 
+message Auth {
+  message JWT {
+    string secret = 1;
+  }
+  JWT jwt = 1;
+}
+
+message Storage {
+  string path = 1;
+}
+
 message Client {
   message Config {
     string endpoint = 1;
@@ -59,12 +81,14 @@ message Client {
 }
 
 message S3 {
-  message Yandex {
+  message Config {
     string endpoint = 1;
     string bucketLocation = 2;
     string bucketName = 3;
-    string accessKeyId = 4;
+    string accessKeyID = 4;
     string secretAccessKey = 5;
   }
-  Yandex yandex = 1;
+  string current = 1;
+  Config yandex = 2;
+  Config vk = 3;
 }

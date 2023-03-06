@@ -71,6 +71,6 @@ func (File) Indexes() []ent.Index {
 		index.Fields(`user_id`),
 		index.Fields(`deleted_at`),
 		index.Fields(`filename`),
-		index.Fields(`object_path`),
+		index.Fields(`object_path`).Unique(),
 	}
 }

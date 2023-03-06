@@ -29,14 +29,8 @@ type ErrorCommon struct {
 	} `json:"error"`
 }
 
-// Авторизационный токен для пользовательской сессии
-type PropertyAuthToken = string
-
-// Авторизационный токен для пользовательской сессии
-type AuthTokenInHeaders = PropertyAuthToken
-
-// Авторизационный токен для пользовательской сессии
-type AuthTokenInQuery = PropertyAuthToken
+// Filename
+type Filename = string
 
 // ErrorBadRequest defines model for errorBadRequest.
 type ErrorBadRequest = ErrorCommon
@@ -53,20 +47,16 @@ type ErrorUnauthorized = ErrorCommon
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7xV3U4bRxR+ldG0lxtYh1IF3xnSwq7AhMSQ9E/RsHvsHdidGc+MKQZZKlxUqlKpfYI+",
-	"QxoVxU2K+wpn36ia2bWxC1VbReLOc36+7zt/3nOayEJJAcIa2jynimlWgAXtX2xgs448BhGJLWBpbU3B",
-	"JJory6WgTdoa2IxYF0S6WhZkGhhQ7tyZf9KAClYAbdLTBw70gU+gATVJBgVzqB9r6NIm/Wj5RtBy5TXL",
-	"SksF2g5bUz10NArm1e0NQA//XVsVVivr149a2Aztg1SNAqrBKCkM+F6B1lKvs/Qp9AdgrDMlUlgQ/idT",
-	"KucJc2qXj4yTfP4fuT3uhiwKWbMuFv5JGJJ1lpIp7Sig8xn3pKLykNaTiPjImYxIWNCC5fclZDUMyZST",
-	"PAN9App8tqCoI+UOE8O6X+be5vRwjXSkJI6bzMinovaFW0qp+Rmk97c5DbLA60Lq3NlC36wRS1PuMln+",
-	"pLoG7va+y3IDAVVzpjrzf+YkMoXbZ+1HR7wvoHDKCpUDba6GYUDtULlj5sJCD/x4CzCG9f4RZeqeA6Kd",
-	"DDQQboiRBdiMix75VkvRozN8YzUXPeqvndXtX0TvDBWkpPIS2a0PYJ7F9fjl1Pw3XA/cH3DtBv8VrUut",
-	"uW5q+maWKA+PILG3Eiv422GzPs/9ed0qAX/GN+UlTsrvcIxv8XX5PY5xgtd4Xb7C34lz4Tu8wmuCv+H7",
-	"8ieCf+IE35c/4luc4Bt8XV7ilXuXF/gOJy7lAq/Ki/ICxzhe6AUM4+xwM+G7PI72z6JGm0cmEk9Xk43o",
-	"0+hYvTjYiNeWYBirZGXHBZ19+SJ+yJ638+3NzxvpZo9vb8Q5bLX47lGy2u7snu509lfaj+O1pZP28XPW",
-	"6p909m3v7OBZK4vjx/FauLet1qOd/Iv05aNj2Dts9A+2Ht0xhpH7VnTlHb35BX8tf8AxXhFf2x++9mvX",
-	"jfKyfPW1m5Ll1heXVH+Dcx/agJ6ANhVSYylcCt1EpALBFKdNuuJNAVXMZoY2xSDPR38FAAD//8T5Prep",
-	"BwAA",
+	"H4sIAAAAAAAC/7xUwW7UPBB+FWv+/+jtpi17IFIPFIHUA1IFywkQGpJJ1lViu7ZTdqly4YZ4B96BQyWE",
+	"aHkF942QnWQ3SwsSl70lM/PN9814Zi4hU7VWkqSzkF6CRoM1OTLxrxAVSawpfOdkMyO0E0pCCk8HDwcR",
+	"/s8bMivg0EVvgBwMnTfCUA6pMw1xsNmCavxrRlpirauQx4pM7+m8AA5upaPFGSFLaDksJwq1mGQqp5Lk",
+	"hJbO4MRhGZVfYCVydAExCOC1kEeHvMbl0cFsBm3bBnFWK2kpYsgYZY4xf07nDVkXTJmSjmT8RK0rkWFQ",
+	"Oz2zQfLlqJb/DRWQwn/TTTunnddOY97Hqq6V7Fi3C3+QJOwYczbQthzGiB2p6Dzs0ekJi5FrGSfSkZFY",
+	"7UrILEnYwMlekLkgw55sKZor9Qzlqu+X3dk7HTxkc6VY4GZr8kHUS4mNWygjPoRR39Xk7LMt3hDSY9cD",
+	"vRkjzHMRkFidGqXJOBHmvsDKEgc9MvXIf8SERby71vHpWPSNFnuWJOuNFtJRSfF5a7IWyz9mGdzjCzFf",
+	"kCEmLLOqJrcQsmTvjZLlfRfDEPbt384+X2nKWedlqugXYMwSevx2MP+Wtx3fuFfQl9pzbWp6swaqd2eU",
+	"uTvALv09YW24sYW6q9t/8V9vP/lv/or57/7G//A//Y2/9lf++vbj7efXgd4JFyvIuv0eXXsOF2Rsl2l/",
+	"L9lLQouUJolaQAqH0cRBo1tYSGVTVe2vAAAA//8BezgJLgYAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

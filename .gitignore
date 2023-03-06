@@ -39,4 +39,5 @@ bin/
 .env.*
 .cache
 
-storage/
+/storage/
+/key/

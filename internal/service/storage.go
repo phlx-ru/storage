@@ -1,18 +1,21 @@
 package service
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/AlekSi/pointer"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/phlx-ru/hatchet/logger"
+	"github.com/phlx-ru/hatchet/metrics"
+	"github.com/phlx-ru/hatchet/watcher"
 
-	"storage/api/storage"
-	storageComponents "storage/api/storage/storage"
+	v1 "storage/api/storage/v1"
 	"storage/internal/biz"
-	"storage/internal/pkg/logger"
-	"storage/internal/pkg/metrics"
-	"storage/internal/pkg/request"
-	pkgStrings "storage/internal/pkg/strings"
+	storage "storage/schema"
+	storageComponents "storage/schema/storage"
 )
 
 const (
@@ -24,6 +27,7 @@ type StorageService struct {
 	usecase *biz.StorageUsecase
 	metric  metrics.Metrics
 	logger  *log.Helper
+	watcher *watcher.Watcher
 }
 
 func NewGatewayService(
@@ -31,14 +35,26 @@ func NewGatewayService(
 	metric metrics.Metrics,
 	logs log.Logger,
 ) *StorageService {
+	loggerHelper := logger.NewHelper(logs, "ts", log.DefaultTimestamp, "scope", metricPrefix)
 	return &StorageService{
 		usecase: usecase,
 		metric:  metric,
-		logger:  logger.NewHelper(logs, "ts", log.DefaultTimestamp, "scope", "service/storage"),
+		logger:  loggerHelper,
+		watcher: watcher.New(metricPrefix, loggerHelper, metric).
+			WithWarningErrorChecks([]func(err error) bool{
+				v1.IsAccessDenied,
+				v1.IsValidationFailed,
+				v1.IsUnauthorized,
+			}),
 	}
 }
 
 func (s *StorageService) GetSwagger(c *gin.Context) {
+	var err error
+	defer s.watcher.OnPreparedMethod(`GetSwagger`).Results(func() (context.Context, error) {
+		return c.Request.Context(), err
+	})
+
 	swagger, err := storage.GetSwagger()
 	if err != nil {
 		s.responseError(c, errors.InternalServer(`internal_error`, err.Error()))
@@ -49,18 +65,18 @@ func (s *StorageService) GetSwagger(c *gin.Context) {
 }
 
 func (s *StorageService) Download(c *gin.Context, uid storageComponents.Uid) {
-	method := `download`
-	defer s.metric.NewTiming().Send(pkgStrings.Metric(metricPrefix, method, `timings`))
 	var err error
-	defer func() { s.postProcess(c.Request.Context(), method, err) }()
+	defer s.watcher.OnPreparedMethod(`Download`).Results(func() (context.Context, error) {
+		return c.Request.Context(), err
+	})
 
 	if uid == "" {
-		s.responseError(c, errors.BadRequest(`empty_uid`, `UID is empty`))
+		s.responseError(c, fmt.Errorf(`UID is empty`))
 		return
 	}
 
 	if len(uid) > uidMaxLength {
-		s.responseError(c, errors.BadRequest(`ruined_uid`, `UID must have 36 symbols or less`))
+		s.responseError(c, fmt.Errorf(`UID must have 36 symbols or less`))
 		return
 	}
 
@@ -71,33 +87,23 @@ func (s *StorageService) Download(c *gin.Context, uid storageComponents.Uid) {
 }
 
 func (s *StorageService) Upload(c *gin.Context, params storage.UploadParams) {
-	method := `upload`
-	defer s.metric.NewTiming().Send(pkgStrings.Metric(metricPrefix, method, `timings`))
 	var err error
-	defer func() { s.postProcess(c.Request.Context(), method, err) }()
+	defer s.watcher.OnPreparedMethod(`Upload`).Results(func() (context.Context, error) {
+		return c.Request.Context(), err
+	})
 
-	filename := c.Request.URL.Query().Get(`filename`)
-	if filename == "" {
-		s.responseValidationError(c, errors.Unauthorized(`filename_unspecified`, `filename is not specified`))
-		return
-	}
-
-	token := request.AuthTokenFromContext(c.Request.Context())
-	if params.AuthToken != nil {
-		token = *params.AuthToken
-	}
-	if token == "" {
-		s.responseError(c, errors.Unauthorized(`auth_token_unspecified`, `not found auth token in request`))
+	if err = s.validate(params); err != nil {
+		s.responseValidationError(c, err)
 		return
 	}
 
 	uploadFile := &biz.UploadFile{
 		Reader:   c.Request.Body,
 		Size:     c.Request.ContentLength,
-		Filename: filename,
+		Filename: params.Filename,
 	}
 
-	file, err := s.usecase.Upload(c.Request.Context(), uploadFile, token)
+	file, err := s.usecase.Upload(c.Request.Context(), uploadFile)
 	if err != nil {
 		s.responseError(c, err)
 		return
@@ -115,22 +121,13 @@ func (s *StorageService) Upload(c *gin.Context, params storage.UploadParams) {
 	s.responseOK(c, response)
 }
 
-func (s *StorageService) FilesList(c *gin.Context, params storage.FilesListParams) {
-	method := `filesList`
-	defer s.metric.NewTiming().Send(pkgStrings.Metric(metricPrefix, method, `timings`))
+func (s *StorageService) FilesList(c *gin.Context) {
 	var err error
-	defer func() { s.postProcess(c.Request.Context(), method, err) }()
+	defer s.watcher.OnPreparedMethod(`FilesList`).Results(func() (context.Context, error) {
+		return c.Request.Context(), err
+	})
 
-	token := request.AuthTokenFromContext(c.Request.Context())
-	if params.AuthToken != nil {
-		token = *params.AuthToken
-	}
-	if token == "" {
-		s.responseError(c, errors.Unauthorized(`auth_token_unspecified`, `not found auth token in request`))
-		return
-	}
-
-	files, err := s.usecase.FilesList(c.Request.Context(), token)
+	files, err := s.usecase.FilesList(c.Request.Context())
 	if err != nil {
 		s.responseError(c, errors.InternalServer(`internal_server`, err.Error()))
 		return

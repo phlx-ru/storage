@@ -9,42 +9,50 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
+	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/gosimple/slug"
+	"github.com/phlx-ru/hatchet/logger"
+	"github.com/phlx-ru/hatchet/metrics"
 
+	v1 "storage/api/storage/v1"
 	"storage/ent"
 	"storage/internal/clients/auth"
-	"storage/internal/clients/yandex"
-	"storage/internal/pkg/logger"
-	"storage/internal/pkg/metrics"
-	"storage/internal/pkg/strings"
+	"storage/internal/clients/minio"
+	"storage/internal/conf"
 )
 
 const (
 	metricPrefix = `biz.storage`
+
+	defaultContentType = `application/octet-stream`
 )
 
 type StorageUsecase struct {
-	authClient   auth.Client
-	yandexClient yandex.Client
-	fileRepo     FileRepo
-	metric       metrics.Metrics
-	logger       *log.Helper
+	authClient  auth.Client
+	minioClient minio.Client
+	fileRepo    fileRepository
+	auth        *conf.Auth
+	metric      metrics.Metrics
+	logger      *log.Helper
 }
 
 func NewStorageUsecase(
 	authClient auth.Client,
-	yandexClient yandex.Client,
-	fileRepo FileRepo,
+	minioClient minio.Client,
+	fileRepo fileRepository,
+	auth *conf.Auth,
 	metric metrics.Metrics,
 	logs log.Logger,
 ) *StorageUsecase {
+	loggerHelper := logger.NewHelper(logs, "ts", log.DefaultTimestamp, "scope", metricPrefix)
 	return &StorageUsecase{
-		authClient:   authClient,
-		yandexClient: yandexClient,
-		fileRepo:     fileRepo,
-		metric:       metric,
-		logger:       logger.NewHelper(logs, "ts", log.DefaultTimestamp, "scope", "biz/storage"),
+		authClient:  authClient,
+		minioClient: minioClient,
+		fileRepo:    fileRepo,
+		auth:        auth,
+		metric:      metric,
+		logger:      loggerHelper,
 	}
 }
 
@@ -59,46 +67,57 @@ func slugFromFilename(filename string) string {
 	return slug.Make(filename[0:len(filename)-len(ext)]) + ext
 }
 
-func makeObjectPath(userID int64, filename string) string {
+func makeObjectPath(userID int, filename string) string {
 	return fmt.Sprintf(`%d/%s`, userID, slugFromFilename(filename))
 }
 
-func (s *StorageUsecase) postProcess(ctx context.Context, method string, err error) {
-	if err != nil {
-		s.logger.WithContext(ctx).Errorf(`biz storage method %s failed: %v`, method, err)
-		s.metric.Increment(strings.Metric(metricPrefix, method, `failure`))
-	} else {
-		s.metric.Increment(strings.Metric(metricPrefix, method, `success`))
+func (s *StorageUsecase) Upload(ctx context.Context, file *UploadFile) (*ent.File, error) {
+	if file == nil {
+		return nil, fmt.Errorf(`file is empty`)
 	}
-}
-
-func (s *StorageUsecase) Upload(ctx context.Context, file *UploadFile, authToken string) (*ent.File, error) {
-	method := `upload`
-	defer s.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
 	var err error
-	defer func() { s.postProcess(ctx, method, err) }()
+	var user *AuthenticatedUser
+	if !s.isIntegrations(ctx) {
+		if user, err = s.user(ctx); err != nil {
+			return nil, err
+		}
+	}
 
-	check, err := s.authClient.Check(ctx, authToken)
+	userID := 0 // for integrations
+	if user != nil {
+		userID = int(user.ID())
+	}
+
+	contentType := mime.TypeByExtension(filepath.Ext(file.Filename))
+	if contentType == "" {
+		contentType = defaultContentType
+	}
+
+	objectPath := makeObjectPath(userID, file.Filename)
+	found, err := s.fileRepo.FindByObjectPath(ctx, objectPath)
+	if err != nil && ent.IsNotFound(err) {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	contentType := mime.TypeByExtension(filepath.Ext(file.Filename))
-	if contentType == "" {
-		contentType = "application/octet-stream"
+	if found != nil {
+		return nil, v1.ErrorValidationFailed(`file with object path [%s] is already exists`, objectPath)
 	}
 
-	objectPath := makeObjectPath(check.User.ID, file.Filename)
-
 	saved, err := s.fileRepo.Create(ctx, &ent.File{
-		UserID:     int(check.User.ID),
+		UserID:     userID,
 		Filename:   file.Filename,
 		ObjectPath: objectPath,
 		Size:       int(file.Size),
 		MimeType:   contentType,
-		DeletedAt:  pointer.ToTime(time.Now()),
+		DeletedAt:  pointer.ToTime(time.Now()), // For restore after success upload
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	_, err = s.yandexClient.UploadFromReader(ctx, file.Reader, file.Size, contentType, objectPath)
+	_, err = s.minioClient.UploadFromReader(ctx, file.Reader, file.Size, contentType, objectPath)
 
 	if err == nil {
 		err = s.fileRepo.Restore(ctx, saved.UID.String())
@@ -107,36 +126,39 @@ func (s *StorageUsecase) Upload(ctx context.Context, file *UploadFile, authToken
 	return saved, err
 }
 
-func (s *StorageUsecase) Download(ctx context.Context, uid string, writer io.Writer) error {
-	method := `download`
-	defer s.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
-	var err error
-	defer func() { s.postProcess(ctx, method, err) }()
+func (s *StorageUsecase) Download(ctx context.Context, uid string, writer gin.ResponseWriter) error {
+	if !s.isIntegrations(ctx) {
+		if _, err := s.user(ctx); err != nil {
+			return err
+		}
+	}
 
-	file, err := s.fileRepo.FindByUID(ctx, uid)
+	f, err := s.fileRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
 	}
-
-	err = s.yandexClient.DownloadToWriter(ctx, writer, file.ObjectPath)
-
-	return err
+	writer.Header().Set(`Content-Type`, f.MimeType)
+	writer.Header().Set(`Content-Disposition`, fmt.Sprintf(`attachment; filename="%s"`, f.Filename))
+	return s.minioClient.DownloadToWriter(ctx, writer, f.ObjectPath)
 }
 
-func (s *StorageUsecase) FilesList(ctx context.Context, token string) ([]*ent.File, error) {
-	method := `filesList`
-	defer s.metric.NewTiming().Send(strings.Metric(metricPrefix, method, `timings`))
+func (s *StorageUsecase) FilesList(ctx context.Context) ([]*ent.File, error) {
 	var err error
-	defer func() { s.postProcess(ctx, method, err) }()
+	var user *AuthenticatedUser
+	if !s.isIntegrations(ctx) {
+		if user, err = s.user(ctx); err != nil {
+			return nil, err
+		}
+	}
 
-	check, err := s.authClient.Check(ctx, token)
-	if err != nil {
-		return nil, err
+	userID := 0 // for integrations
+	if user != nil {
+		userID = int(user.ID())
 	}
 
 	limit := 100
 	offset := 0
-	files, err := s.fileRepo.FindByUserID(ctx, int(check.User.ID), limit, offset)
+	files, err := s.fileRepo.FindByUserID(ctx, userID, limit, offset)
 
 	return files, err
 }

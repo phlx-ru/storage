@@ -10,12 +10,12 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/phlx-ru/hatchet/metrics"
 	"storage/internal/biz"
 	"storage/internal/clients/auth"
-	"storage/internal/clients/yandex"
+	"storage/internal/clients/minio"
 	"storage/internal/conf"
 	"storage/internal/data"
-	"storage/internal/pkg/metrics"
 	"storage/internal/server"
 	"storage/internal/service"
 )
@@ -34,11 +34,11 @@ func wireData(confData *conf.Data, logger log.Logger) (data.Database, func(), er
 }
 
 // wireApp init kratos application.
-func wireApp(contextContext context.Context, database data.Database, confServer *conf.Server, client auth.Client, yandexClient yandex.Client, metricsMetrics metrics.Metrics, logger log.Logger) (*kratos.App, error) {
+func wireApp(contextContext context.Context, database data.Database, confServer *conf.Server, confAuth *conf.Auth, client auth.Client, minioClient minio.Client, metricsMetrics metrics.Metrics, logger log.Logger) (*kratos.App, error) {
 	fileRepo := data.NewFileRepo(database, logger, metricsMetrics)
-	storageUsecase := biz.NewStorageUsecase(client, yandexClient, fileRepo, metricsMetrics, logger)
+	storageUsecase := biz.NewStorageUsecase(client, minioClient, fileRepo, confAuth, metricsMetrics, logger)
 	storageService := service.NewGatewayService(storageUsecase, metricsMetrics, logger)
-	httpServer := server.NewHTTPServer(confServer, storageService, metricsMetrics, logger)
+	httpServer := server.NewHTTPServer(confAuth, confServer, storageService, metricsMetrics)
 	app := newApp(contextContext, logger, httpServer)
 	return app, nil
 }

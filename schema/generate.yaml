@@ -5,5 +5,5 @@ generate:
   models: true
   embedded-spec: true
 import-mapping:
-  ./common/schema.yaml: storage/api/storage/common
-  ./storage/schema.yaml: storage/api/storage/storage
+  ./common/schema.yaml: storage/schema/common
+  ./storage/schema.yaml: storage/schema/storage

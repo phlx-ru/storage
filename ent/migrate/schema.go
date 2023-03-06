@@ -49,7 +49,7 @@ var (
 			},
 			{
 				Name:    "file_object_path",
-				Unique:  false,
+				Unique:  true,
 				Columns: []*schema.Column{FilesColumns[4]},
 			},
 		},

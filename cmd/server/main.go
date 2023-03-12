@@ -17,6 +17,7 @@ import (
 	"github.com/phlx-ru/hatchet/logger"
 	"github.com/phlx-ru/hatchet/metrics"
 	"github.com/phlx-ru/hatchet/runtime"
+	"github.com/phlx-ru/hatchet/sentry"
 
 	"storage/internal/clients/auth"
 	"storage/internal/clients/minio"
@@ -81,6 +82,17 @@ func run() error {
 	}
 
 	logs := logger.New(id, Name, Version, bc.Log.Level, bc.Env, bc.Sentry.Level)
+
+	flush, err := sentry.Init(bc.Sentry.Dsn,
+		sentry.WithEnv(bc.Env),
+		sentry.WithEnabled(bc.Sentry.Enabled),
+		sentry.WithLogger(logger.NewHelper(logs)),
+		sentry.WithFlushTimeoutString(bc.Sentry.FlushTimeout),
+	)
+	if err != nil {
+		return err
+	}
+	defer flush()
 
 	metric, err := metrics.New(bc.Metrics.Address, Name, bc.Metrics.Mute)
 	if err != nil {

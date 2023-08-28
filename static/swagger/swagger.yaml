@@ -169,9 +169,6 @@ paths:
     get:
       tags:
         - storage
-      security:
-        - jwt: []
-          integrations: []
       operationId: Download
       responses:
         '200':

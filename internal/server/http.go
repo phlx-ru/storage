@@ -24,7 +24,6 @@ const (
 
 // NewHTTPServer new HTTP server.
 func NewHTTPServer(
-	a *conf.Auth,
 	c *conf.Server,
 	ss *service.StorageService,
 	metric metrics.Metrics,

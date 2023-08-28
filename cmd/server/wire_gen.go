@@ -38,7 +38,7 @@ func wireApp(contextContext context.Context, database data.Database, confServer 
 	fileRepo := data.NewFileRepo(database, logger, metricsMetrics)
 	storageUsecase := biz.NewStorageUsecase(client, minioClient, fileRepo, confAuth, metricsMetrics, logger)
 	storageService := service.NewGatewayService(storageUsecase, metricsMetrics, logger)
-	httpServer := server.NewHTTPServer(confAuth, confServer, storageService, metricsMetrics)
+	httpServer := server.NewHTTPServer(confServer, storageService, metricsMetrics)
 	app := newApp(contextContext, logger, httpServer)
 	return app, nil
 }

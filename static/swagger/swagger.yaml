@@ -90,7 +90,7 @@ paths:
                     type: integer
                     description: Уникальный идентификатор пользователя
                     example: 1
-                  filename: &ref_6
+                  filename: &ref_7
                     type: string
                     description: >-
                       Название файла с расширением, с таким названием файл будет
@@ -98,16 +98,16 @@ paths:
                     example: >-
                       С. Рассел, П. Норвиг ~ Искусственный интеллект современный
                       подход (AIMA-2), 2-е издание, 2007.pdf
-                  objectPath: &ref_7
+                  objectPath: &ref_8
                     type: string
                     description: Расположение файла на S3-хранилище
                     example: >-
                       1/s-rassel-p-norvig-iskusstvennyi-intellekt-sovremennyi-podkhod-aima-2-2-e-izdanie-2007.pdf
-                  size: &ref_8
+                  size: &ref_9
                     type: integer
                     description: Размер файла в байтах
                     example: 12843018
-                  mimeType: &ref_9
+                  mimeType: &ref_10
                     type: string
                     description: MIME-тип файла
                     example: application/pdf
@@ -171,7 +171,7 @@ paths:
         - storage
       operationId: Download
       responses:
-        '200':
+        '200': &ref_6
           description: download ok
           content:
             '*/*': {}
@@ -179,6 +179,12 @@ paths:
         '401': *ref_3
         '429': *ref_4
         '500': *ref_5
+    options:
+      tags:
+        - storage
+      operationId: DownloadOptions
+      responses:
+        '200': *ref_6
   /api/1/files/list:
     summary: Получение списка файлов для текущего авторизованного пользователя
     description: >
@@ -215,10 +221,10 @@ paths:
                         - objectPath
                       properties:
                         uid: *ref_1
-                        filename: *ref_6
-                        objectPath: *ref_7
-                        size: *ref_8
-                        mimeType: *ref_9
+                        filename: *ref_7
+                        objectPath: *ref_8
+                        size: *ref_9
+                        mimeType: *ref_10
         '400': *ref_2
         '401': *ref_3
         '429': *ref_4

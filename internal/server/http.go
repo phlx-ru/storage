@@ -2,9 +2,9 @@ package server
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	kgin "github.com/go-kratos/gin"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
@@ -68,22 +68,25 @@ func NewHTTPServer(
 			tracing.Server(),
 			recovery.Recovery(),
 		),
+		cors.New(cors.Config{
+			AllowAllOrigins: true,
+			AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+			AllowHeaders: []string{
+				"Authorization",
+				"Origin",
+				"Content-Length",
+				"Content-Type",
+				"Content-Disposition",
+				"Accept",
+				"Accept-Language",
+				"Accept-Range",
+				"Range",
+			},
+		}),
 	)
+
 	router.Static(`/form`, `./static/form`)
-	router.
-		Use(cors(`*`, strings.Join([]string{
-			`GET`,
-			`POST`,
-			`DELETE`,
-			`PUT`,
-			`PATCH`,
-			`OPTIONS`,
-		}, `, `), strings.Join([]string{
-			`Content-Type`,
-			`Authorization`,
-			`X-Integrations-Token`,
-		}, `, `))).
-		Static(`/swagger`, `./static/swagger`)
+	router.Static(`/swagger`, `./static/swagger`)
 
 	router.GET(`/api/swagger`, ss.GetSwagger)
 
@@ -116,12 +119,4 @@ func LogFormatter(param gin.LogFormatterParams) string {
 		param.Path,
 		param.ErrorMessage,
 	)
-}
-
-func cors(origin, methods, headers string) gin.HandlerFunc {
-	return func(context *gin.Context) {
-		context.Header("Access-Control-Allow-Origin", origin)
-		context.Header("Access-Control-Allow-Methods", methods)
-		context.Header("Access-Control-Allow-Headers", headers)
-	}
 }

@@ -90,6 +90,12 @@ paths:
           $ref: "./common/schema.yaml#/components/responses/errorTooManyRequests"
         '500':
           $ref: "./common/schema.yaml#/components/responses/errorInternal"
+    options:
+      tags: [ 'storage' ]
+      operationId: DownloadOptions
+      responses:
+        '200':
+          $ref: "./storage/schema.yaml#/components/responses/download"
 
   /api/1/files/list: # TODO IMPROVE OR DELETE
     summary: Получение списка файлов для текущего авторизованного пользователя

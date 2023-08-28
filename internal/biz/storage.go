@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -29,12 +30,13 @@ const (
 )
 
 type StorageUsecase struct {
-	authClient  auth.Client
-	minioClient minio.Client
-	fileRepo    fileRepository
-	auth        *conf.Auth
-	metric      metrics.Metrics
-	logger      *log.Helper
+	authClient                  auth.Client
+	minioClient                 minio.Client
+	fileRepo                    fileRepository
+	auth                        *conf.Auth
+	metric                      metrics.Metrics
+	logger                      *log.Helper
+	useAuthorizationForDownload bool
 }
 
 func NewStorageUsecase(
@@ -47,12 +49,13 @@ func NewStorageUsecase(
 ) *StorageUsecase {
 	loggerHelper := logger.NewHelper(logs, "ts", log.DefaultTimestamp, "scope", metricPrefix)
 	return &StorageUsecase{
-		authClient:  authClient,
-		minioClient: minioClient,
-		fileRepo:    fileRepo,
-		auth:        auth,
-		metric:      metric,
-		logger:      loggerHelper,
+		authClient:                  authClient,
+		minioClient:                 minioClient,
+		fileRepo:                    fileRepo,
+		auth:                        auth,
+		metric:                      metric,
+		logger:                      loggerHelper,
+		useAuthorizationForDownload: false,
 	}
 }
 
@@ -127,12 +130,22 @@ func (s *StorageUsecase) Upload(ctx context.Context, file *UploadFile) (*ent.Fil
 }
 
 func (s *StorageUsecase) Download(ctx context.Context, uid string, writer gin.ResponseWriter) error {
+	if s.useAuthorizationForDownload && !s.isIntegrations(ctx) {
+		if _, err := s.user(ctx); err != nil {
+			return err
+		}
+	}
+
 	f, err := s.fileRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
 	}
 	writer.Header().Set(`Content-Type`, f.MimeType)
-	writer.Header().Set(`Content-Disposition`, fmt.Sprintf(`attachment; filename="%s"`, f.Filename))
+	disposition := "inline"
+	if !strings.HasPrefix(f.MimeType, "image/") {
+		disposition = fmt.Sprintf(`attachment; filename="%s"`, f.Filename)
+	}
+	writer.Header().Set(`Content-Disposition`, disposition)
 	return s.minioClient.DownloadToWriter(ctx, writer, f.ObjectPath)
 }
 

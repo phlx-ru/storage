@@ -40,3 +40,7 @@ func (s *StorageService) responseValidationError(c *gin.Context, err error) {
 func (s *StorageService) responseOK(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, data)
 }
+
+func (s *StorageService) responseNoContent(c *gin.Context) {
+	c.Status(http.StatusNoContent)
+}

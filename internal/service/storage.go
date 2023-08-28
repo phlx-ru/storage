@@ -86,6 +86,15 @@ func (s *StorageService) Download(c *gin.Context, uid storageComponents.Uid) {
 	}
 }
 
+func (s *StorageService) DownloadOptions(c *gin.Context, _ storageComponents.Uid) {
+	var err error
+	defer s.watcher.OnPreparedMethod(`DownloadOptions`).Results(func() (context.Context, error) {
+		return c.Request.Context(), err
+	})
+
+	s.responseNoContent(c)
+}
+
 func (s *StorageService) Upload(c *gin.Context, params storage.UploadParams) {
 	var err error
 	defer s.watcher.OnPreparedMethod(`Upload`).Results(func() (context.Context, error) {

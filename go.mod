@@ -7,6 +7,7 @@ require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.105.0
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-kratos/gin v0.1.0
 	github.com/go-kratos/kratos/v2 v2.5.4

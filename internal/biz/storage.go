@@ -127,12 +127,6 @@ func (s *StorageUsecase) Upload(ctx context.Context, file *UploadFile) (*ent.Fil
 }
 
 func (s *StorageUsecase) Download(ctx context.Context, uid string, writer gin.ResponseWriter) error {
-	if !s.isIntegrations(ctx) {
-		if _, err := s.user(ctx); err != nil {
-			return err
-		}
-	}
-
 	f, err := s.fileRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
